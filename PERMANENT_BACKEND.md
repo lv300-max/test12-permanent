@@ -7,8 +7,9 @@ To make it permanent (stable URL 24/7), deploy the backend to Render using the i
 ## What you do (3 steps)
 
 1) Put this folder on GitHub (so Render can access it)
+   - After you login to GitHub CLI: run `./publish-to-github.sh test12-permanent public`
 2) On Render: **New** → **Blueprint** → select the repo → **Apply**
-3) Copy the Render URL and paste it into `TEST12/web/config.json` as `api_base_url`, then redeploy Netlify with `netlify-upload.zip`
+3) Copy the Render URL and run `./set-backend-url.sh https://YOUR-RENDER-URL`, then upload `netlify-upload.zip` to Netlify
 
 ## After you have the permanent backend URL
 
@@ -19,4 +20,3 @@ To make it permanent (stable URL 24/7), deploy the backend to Render using the i
 
 - The backend is the shared queue/session “real-time” state (everyone sees the same session once 12 are queued).
 - The app reads `https://test-12test.netlify.app/config.json` automatically if you don’t hardcode a backend URL at build time.
-
