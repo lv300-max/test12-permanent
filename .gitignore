@@ -17,7 +17,9 @@ TEST12-src-*/
 server/.public_*.log
 server/.server_pid
 server/.tunnel_pid
+server/.caffeinate*
 server/data/*.json
+server/bin/
 
 # Node
 **/node_modules/
