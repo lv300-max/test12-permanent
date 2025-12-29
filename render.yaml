@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: test12-server
+    env: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: TEST12_ADMIN_TOKEN
+        generateValue: true
+      - key: TEST12_STATE_PATH
+        value: /var/data/state.json
+    disk:
+      name: test12-data
+      mountPath: /var/data
+      sizeGB: 1
+

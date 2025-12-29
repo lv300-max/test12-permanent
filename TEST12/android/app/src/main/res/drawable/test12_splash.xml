@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="640dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="2048">
+
+    <!-- Background -->
+    <path
+        android:fillColor="#0A0A0A"
+        android:pathData="M0,0h1024v2048h-1024z"/>
+
+    <!-- Subtle terminal grid -->
+    <path
+        android:fillColor="#141414"
+        android:pathData="
+        M0,128h1024v3h-1024z
+        M0,256h1024v3h-1024z
+        M0,384h1024v3h-1024z
+        M0,512h1024v3h-1024z
+        M0,640h1024v3h-1024z
+        M0,768h1024v3h-1024z
+        M0,896h1024v3h-1024z
+        M0,1024h1024v3h-1024z
+        M0,1152h1024v3h-1024z
+        M0,1280h1024v3h-1024z
+        M0,1408h1024v3h-1024z
+        M0,1536h1024v3h-1024z
+        M0,1664h1024v3h-1024z
+        M0,1792h1024v3h-1024z"/>
+
+    <!-- Status grid mark -->
+    <path android:fillColor="#EAEAEA" android:pathData="M360,820h48v48h-48z"/>
+    <path android:fillColor="#444444" android:pathData="M424,820h48v48h-48z"/>
+    <path android:fillColor="#444444" android:pathData="M488,820h48v48h-48z"/>
+
+    <path android:fillColor="#F2C94C" android:pathData="M360,884h48v48h-48z"/>
+    <path android:fillColor="#444444" android:pathData="M424,884h48v48h-48z"/>
+    <path android:fillColor="#444444" android:pathData="M488,884h48v48h-48z"/>
+
+    <path android:fillColor="#444444" android:pathData="M360,948h48v48h-48z"/>
+    <path android:fillColor="#444444" android:pathData="M424,948h48v48h-48z"/>
+    <path android:fillColor="#C0392B" android:pathData="M488,948h48v48h-48z"/>
+
+    <!-- TEST-12 text -->
+    <path
+        android:fillColor="#EAEAEA"
+        android:pathData="
+        M580,860h40v20h-10v100h-20v-100h-10z
+        M630,860h20v120h-20z
+        M670,860h40v20h-20v30h20v20h-20v50h-20z
+        M730,860h40v20h-10v100h-20v-100h-10z
+        M800,920h40v20h-40z
+        M860,860h40v20h-20v30h20v20h-20v30h20v20h-40z
+        "/>
+
+    <!-- Footer system text -->
+    <path
+        android:fillColor="#666666"
+        android:pathData="
+        M300,1120h424v12h-424z"/>
+</vector>

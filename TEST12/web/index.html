@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TEST 12</title>
+    <meta name="description" content="Test 12 — controlled testing rotation system." />
+    <meta property="og:title" content="TEST 12" />
+    <meta property="og:description" content="Controlled testing rotation. 12 apps per session. 14 days." />
+    <meta property="og:image" content="/assets/hero.jpg" />
+    <meta name="theme-color" content="#03060d" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/assets/icons/favicon-48.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png" />
+    <link rel="preload" as="image" href="/assets/hero.jpg" />
+    <link rel="preload" as="video" href="/assets/webvid.mp4" type="video/mp4" />
+    <style>
+      :root {
+        --bg: #03060d;
+        --border: #1f2937;
+        --text: #e8eaff;
+        --dim: #8b94a1;
+        --accent: #6ce4ba;
+        --highlight: #fedb7e;
+      }
+      * {
+        box-sizing: border-box;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", monospace;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: radial-gradient(circle at 20% 20%, #0f2945, #050b16 55%, #000);
+        color: var(--text);
+      }
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 48px 16px;
+        min-height: 100%;
+        display: grid;
+        place-items: center;
+      }
+      .card {
+        background: linear-gradient(145deg, rgba(14, 36, 63, 0.6), rgba(9, 29, 55, 0.7));
+        border: 1px solid #1e3a5f;
+        border-radius: 16px;
+        padding: 18px 18px;
+        box-shadow: 0 0 24px rgba(0, 150, 255, 0.14);
+        width: 100%;
+      }
+      p {
+        margin: 0;
+        color: var(--dim);
+        line-height: 1.5;
+        font-size: 13px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(15, 20, 31, 0.9);
+        color: var(--text);
+        text-decoration: none;
+        width: 100%;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        cursor: pointer;
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .label {
+        display: block;
+        font-size: 12px;
+        letter-spacing: 0.2px;
+        color: rgba(232, 234, 255, 0.92);
+        margin-bottom: 8px;
+      }
+      .helper {
+        margin-top: 8px;
+        font-size: 11px;
+        color: var(--dim);
+      }
+      .field {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(31, 41, 55, 0.9);
+        background: rgba(3, 6, 13, 0.35);
+        color: var(--text);
+        outline: none;
+      }
+      .field:focus {
+        border-color: rgba(108, 228, 186, 0.55);
+        box-shadow: 0 0 0 2px rgba(108, 228, 186, 0.12);
+      }
+      .stack {
+        display: grid;
+        gap: 12px;
+      }
+      .status-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .status-box {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        border: 1px solid rgba(31, 41, 55, 0.9);
+        background: rgba(3, 6, 13, 0.35);
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+      }
+      .status-box.on {
+        border-color: rgba(108, 228, 186, 0.65);
+        background: rgba(108, 228, 186, 0.25);
+        box-shadow: 0 0 0 2px rgba(108, 228, 186, 0.12), 0 0 18px rgba(108, 228, 186, 0.18);
+      }
+      .confirm-primary {
+        margin: 0;
+        font-weight: 900;
+        color: rgba(232, 234, 255, 0.96);
+        letter-spacing: 0.2px;
+        font-size: 18px;
+      }
+      .confirm-secondary {
+        margin-top: 10px;
+        color: var(--dim);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .micro {
+        margin-top: 14px;
+        font-size: 10px;
+        color: rgba(139, 148, 161, 0.9);
+      }
+      .btn[disabled] {
+        opacity: 0.45;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .check {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-size: 12px;
+        color: rgba(139, 148, 161, 0.96);
+        line-height: 1.4;
+      }
+      .check input {
+        width: 16px;
+        height: 16px;
+      }
+      .chip {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(31, 41, 55, 0.9);
+        background: rgba(3, 6, 13, 0.35);
+        color: rgba(232, 234, 255, 0.94);
+        font-size: 11px;
+      }
+      .card.recorded {
+        border-color: rgba(108, 228, 186, 0.35);
+        box-shadow: 0 0 0 1px rgba(108, 228, 186, 0.12), 0 0 32px rgba(108, 228, 186, 0.12);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <div class="card" id="gate">
+        <iframe name="netlifyTarget" hidden></iframe>
+        <form
+          id="netlifyForm"
+          name="test12-gate"
+          method="POST"
+          data-netlify="true"
+          netlify-honeypot="bot-field"
+          target="netlifyTarget"
+          hidden
+        >
+          <input type="hidden" name="form-name" value="test12-gate" />
+          <input name="bot-field" />
+          <input type="email" name="gmail" />
+          <input type="text" name="app_name" />
+          <input type="url" name="store_link" />
+        </form>
+
+        <div class="status-row" aria-hidden="true">
+          <div id="gmailOk" class="status-box"></div>
+          <div id="joinedOk" class="status-box"></div>
+        </div>
+        <form id="gateForm" class="stack" autocomplete="on">
+          <div>
+            <label class="label" for="gmail">Google account (Gmail)</label>
+            <input
+              id="gmail"
+              class="field"
+              name="gmail"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              autocapitalize="off"
+              spellcheck="false"
+              required
+            />
+            <p class="helper">Use the account you install apps with.</p>
+          </div>
+          <button class="btn" type="submit">Save email</button>
+        </form>
+
+        <div id="gateConfirm" class="stack" hidden>
+          <p class="confirm-primary">3 steps.</p>
+          <div class="confirm-secondary">
+            <div>1) Join group: <span class="chip">test-12v1@googlegroups.com</span></div>
+            <div>2) Opt in on Google Play</div>
+            <div>3) Download</div>
+          </div>
+          <a id="joinGroupBtn" class="btn" target="_blank" rel="noopener">1) OPEN GOOGLE GROUP (TAP JOIN)</a>
+          <label class="check">
+            <input id="joined" type="checkbox" />
+            I joined the group (then unlocks download)
+          </label>
+          <button id="optInBtn" class="btn" type="button" disabled>2) OPEN OPT-IN LINK</button>
+          <button id="storeBtn" class="btn" type="button" disabled>3) OPEN PLAY STORE DOWNLOAD</button>
+          <div class="micro"><a href="/privacy">Privacy</a></div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const STORAGE_KEY = "test12_gmail";
+      const JOINED_KEY = "test12_joined_group_v1";
+      const RECORDED_KEY = "test12_recorded_v1";
+
+      const GROUP_URL = "https://groups.google.com/g/test-12v1";
+      const OPTIN_URL = "https://play.google.com/apps/testing/com.test12.app";
+      const STORE_URL = "https://play.google.com/store/apps/details?id=com.test12.app";
+
+      const form = document.getElementById("gateForm");
+      const input = document.getElementById("gmail");
+      const confirm = document.getElementById("gateConfirm");
+      const gate = document.getElementById("gate");
+      const gmailOk = document.getElementById("gmailOk");
+      const joinedOk = document.getElementById("joinedOk");
+      const joined = document.getElementById("joined");
+      const joinGroupBtn = document.getElementById("joinGroupBtn");
+      const optInBtn = document.getElementById("optInBtn");
+      const storeBtn = document.getElementById("storeBtn");
+      const netlifyForm = document.getElementById("netlifyForm");
+      const netlifyGmail = netlifyForm?.elements?.namedItem?.("gmail") || null;
+      const netlifyAppName = netlifyForm?.elements?.namedItem?.("app_name") || null;
+      const netlifyStoreLink = netlifyForm?.elements?.namedItem?.("store_link") || null;
+
+      let locked = false;
+
+      function setSafe(key, value) {
+        try {
+          localStorage.setItem(key, value);
+          return;
+        } catch {}
+        try {
+          sessionStorage.setItem(key, value);
+          return;
+        } catch {}
+        window[`__${key}`] = value;
+      }
+
+      function getSafe(key) {
+        try {
+          const v = localStorage.getItem(key);
+          if (v != null) return v;
+        } catch {}
+        try {
+          const v = sessionStorage.getItem(key);
+          if (v != null) return v;
+        } catch {}
+        return window[`__${key}`] ?? null;
+      }
+
+      function isGmailAddress(value) {
+        const v = String(value || "").trim();
+        if (!v) return false;
+        if (!input.checkValidity()) return false;
+        const lower = v.toLowerCase();
+        return lower.endsWith("@gmail.com") || lower.endsWith("@googlemail.com");
+      }
+
+      function setOn(el, on) {
+        if (!el) return;
+        if (on) el.classList.add("on");
+        else el.classList.remove("on");
+      }
+
+      function updateIndicators() {
+        setOn(gmailOk, isGmailAddress(input.value));
+        setOn(joinedOk, Boolean(joined?.checked));
+        const canDownload = Boolean(joined?.checked) && isGmailAddress(input.value);
+        if (optInBtn) optInBtn.disabled = !canDownload;
+        if (storeBtn) storeBtn.disabled = !canDownload;
+      }
+
+      function sendSubmission(gmail, name, link) {
+        if (netlifyForm && netlifyGmail && netlifyAppName && netlifyStoreLink) {
+          netlifyGmail.value = gmail;
+          netlifyAppName.value = name;
+          netlifyStoreLink.value = link;
+          try {
+            netlifyForm.submit();
+            return;
+          } catch {}
+        }
+
+        const payload = new URLSearchParams();
+        payload.set("form-name", "test12-gate");
+        payload.set("gmail", gmail);
+        payload.set("app_name", name);
+        payload.set("store_link", link);
+        fetch("/", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: payload.toString()
+        }).catch(() => {});
+      }
+
+      function showConfirm() {
+        form.setAttribute("hidden", "");
+        confirm.removeAttribute("hidden");
+        gate.classList.add("recorded");
+        locked = true;
+      }
+
+      form.addEventListener("submit", (e) => {
+        if (locked) return;
+        if (!form.checkValidity()) {
+          return;
+        }
+        e.preventDefault();
+
+        const gmail = String(input.value || "").trim();
+        if (!isGmailAddress(gmail)) return;
+        setSafe(STORAGE_KEY, gmail);
+
+        const joinedValue = Boolean(joined?.checked);
+        setSafe(JOINED_KEY, joinedValue ? "1" : "0");
+        sendSubmission(gmail, "tester", "onboarding");
+        setSafe(RECORDED_KEY, "1");
+        showConfirm();
+      });
+
+      input.addEventListener("input", updateIndicators);
+      joined?.addEventListener("change", () => {
+        setSafe(JOINED_KEY, joined.checked ? "1" : "0");
+        updateIndicators();
+      });
+
+      joinGroupBtn?.setAttribute("href", GROUP_URL);
+
+      optInBtn?.addEventListener("click", () => {
+        if (optInBtn.disabled) return;
+        window.open(OPTIN_URL, "_blank", "noopener");
+      });
+      storeBtn?.addEventListener("click", () => {
+        if (storeBtn.disabled) return;
+        window.open(STORE_URL, "_blank", "noopener");
+      });
+
+      (function init() {
+        const recorded = getSafe(RECORDED_KEY) === "1";
+        const savedGmail = getSafe(STORAGE_KEY);
+        const savedJoined = getSafe(JOINED_KEY) === "1";
+
+        if (typeof savedGmail === "string") input.value = savedGmail;
+        if (joined) joined.checked = savedJoined;
+        updateIndicators();
+
+        if (recorded) {
+          showConfirm();
+          return;
+        }
+
+        if (isGmailAddress(input.value)) updateIndicators();
+      })();
+    </script>
+  </body>
+</html>

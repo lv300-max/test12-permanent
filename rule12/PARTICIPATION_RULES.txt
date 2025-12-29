@@ -1,0 +1,10 @@
+PARTICIPATION RULES
+
+- Testing is encouraged but never enforced
+- No required actions
+- No tracking of installs or reviews
+- Presence is sufficient
+
+System must not degrade if:
+- Users do nothing
+- Users test unevenly

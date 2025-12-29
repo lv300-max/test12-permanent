@@ -1,0 +1,13 @@
+DENIED EXIT RULES
+
+Triggered when:
+- Verification fails
+- Identity mismatch
+- Abuse detected
+
+Behavior:
+- Show denial reason (generic)
+- Terminate session
+- No retry loop
+
+Denied users do not enter queue.

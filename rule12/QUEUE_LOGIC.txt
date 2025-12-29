@@ -1,0 +1,20 @@
+QUEUE LOGIC — AUTHORITATIVE
+
+Queue is chronological.
+
+Fields:
+- app_id
+- user_id
+- entered_at
+- status (waiting | promoted | removed)
+
+Rules:
+- Apps enter queue after verification
+- Queue order is immutable except removal
+- No skipping
+- No reshuffling
+- No prioritization unless explicitly added later
+
+Promotion:
+- When a session opens, take next 12 apps in queue
+- Mark them promoted

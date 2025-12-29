@@ -1,0 +1,9 @@
+[build]
+  publish = "TEST12/web"
+  command = "echo 'Static deploy - no build step'"
+
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy.html"
+  status = 200
+

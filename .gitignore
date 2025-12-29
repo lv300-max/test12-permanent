@@ -1,0 +1,36 @@
+.DS_Store
+
+# Archives / exports
+*.zip
+*.tar.gz
+*.sha256
+
+# Generated/duplicate site bundles in this workspace
+NETLIFY_DEPLOY_TEST12/
+test12-netlify-upload-clean/
+test12-netlify-upload/
+TEST!@WEB/
+Archive12-*/
+TEST12-src-*/
+
+# Local scripts/logs/pids
+server/.public_*.log
+server/.server_pid
+server/.tunnel_pid
+server/data/*.json
+
+# Node
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Flutter / Dart
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/build/
+**/.android/
+**/.ios/
+**/DerivedData/

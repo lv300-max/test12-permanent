@@ -1,0 +1,15 @@
+ADMIN RULES
+
+Admin is a system supervisor.
+
+Admin can:
+- Remove an app
+- Freeze a session
+- Advance queue manually
+
+Admin cannot:
+- Reorder sessions
+- Favor users
+- Alter outcomes
+
+All admin actions must be logged.

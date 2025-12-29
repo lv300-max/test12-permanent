@@ -1,0 +1,15 @@
+SESSION LOGIC
+
+Session fields:
+- session_id
+- start_time
+- end_time
+- status (active | complete)
+
+Rules:
+- Session always contains exactly 12 apps
+- Session duration is exactly 14 days
+- Session auto-completes at end_time
+- Completed apps exit system cleanly
+
+No extensions unless explicitly authorized.

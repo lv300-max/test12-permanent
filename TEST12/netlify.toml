@@ -1,0 +1,9 @@
+[build]
+  # Static deploy: serve files directly from the web folder (contains privacy.html).
+  publish = "web"
+  command = "echo 'Static deploy - no build step'"
+
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy.html"
+  status = 200

@@ -1,0 +1,14 @@
+ASSIGNMENT MAP (USER VIEW)
+
+Each active user sees:
+- Their own app (leftmost)
+- 12 other apps assigned
+
+Layout rule:
+- Exactly 13 icons in one horizontal row
+- No scrolling
+- No reordering
+
+Assignments:
+- Every user sees the same 12 apps
+- Order is consistent per session

@@ -1,0 +1,11 @@
+NON-GOALS (DO NOT BUILD)
+
+- Messaging
+- Feedback forms
+- Social features
+- Gamification
+- Ratings
+- Leaderboards
+- Engagement scoring
+
+These are explicitly out of scope.

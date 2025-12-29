@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TEST-12 · FULL WEB SIMULATION</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    background: radial-gradient(circle at 20% 20%, #0f2945, #050b16 55%, #000);
+    color: #d6e9ff;
+    font-family: Arial, Helvetica, sans-serif;
+    height: 100%;
+    overflow: hidden;
+}
+
+.frame {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 100%;
+    position: relative;
+}
+
+.nebula {
+    position: absolute;
+    inset: 0;
+    background: conic-gradient(from 120deg, rgba(0,255,200,0.08), rgba(0,100,255,0.08), rgba(255,255,255,0.02), rgba(0,255,160,0.12));
+    filter: blur(90px);
+    opacity: 0.5;
+    pointer-events: none;
+    animation: drift 18s linear infinite;
+}
+
+@keyframes drift {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+header {
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #1e3a5f;
+    background: linear-gradient(90deg, rgba(0,0,0,0.7), rgba(0,30,60,0.6));
+    position: relative;
+    z-index: 2;
+}
+
+.title {
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: #7fc7ff;
+}
+
+.frog {
+    color: #00ff88;
+    font-weight: bold;
+    text-shadow: 0 0 12px #00ff88;
+    animation: frogPulse 1.6s infinite;
+}
+
+@keyframes frogPulse {
+    0% { opacity: 0.7; filter: drop-shadow(0 0 4px #00ff88); }
+    50% { opacity: 1; filter: drop-shadow(0 0 12px #00ff88); }
+    100% { opacity: 0.7; filter: drop-shadow(0 0 4px #00ff88); }
+}
+
+.links {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.linkBtn {
+    color: #9cd6ff;
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 0.4px;
+    padding: 6px 10px;
+    border: 1px solid #1e3a5f;
+    border-radius: 8px;
+    transition: background 0.2s, border-color 0.2s;
+    background: transparent;
+    cursor: pointer;
+    appearance: none;
+}
+
+.linkBtn:hover {
+    border-color: #2ef7d0;
+    background: rgba(46, 247, 208, 0.08);
+}
+
+main {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 18px;
+    padding: 18px;
+    position: relative;
+    z-index: 2;
+}
+
+.panel {
+    position: relative;
+    border: 1px solid #1e3a5f;
+    border-radius: 14px;
+    padding: 16px;
+    background: radial-gradient(circle at 20% 20%, rgba(0,80,160,0.25), rgba(5,15,30,0.9));
+    box-shadow: 0 0 30px rgba(0,150,255,0.18);
+    overflow: hidden;
+}
+
+.panel h2 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: #9cd6ff;
+    letter-spacing: 0.5px;
+}
+
+.appGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.app {
+    height: 56px;
+    border-radius: 10px;
+    background: linear-gradient(140deg, #1b7be3, #092d67);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 0 14px rgba(30,144,255,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #e6f5ff;
+    position: relative;
+    overflow: hidden;
+}
+
+.app::after {
+    content: "";
+    position: absolute;
+    inset: -40% 0 auto 0;
+    height: 120%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    transform: translateX(-100%);
+    animation: sweep 3.6s linear infinite;
+}
+
+@keyframes sweep {
+    to { transform: translateX(200%); }
+}
+
+.app:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(0,255,200,0.35);
+}
+
+.dropZone {
+    margin-top: 12px;
+    min-height: 220px;
+    border: 2px dashed #2f5f9f;
+    border-radius: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 8px;
+    padding: 12px;
+    align-content: start;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.dropZone.active {
+    border-color: #00ff88;
+    box-shadow: 0 0 22px rgba(0,255,136,0.55);
+}
+
+.slotBadge {
+    height: 48px;
+    border-radius: 10px;
+    background: linear-gradient(145deg, #0a2a4f, #0f3a63);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9cd6ff;
+    font-size: 11px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: inset 0 0 8px rgba(0,255,136,0.2);
+    cursor: pointer;
+    text-align: center;
+}
+
+.button {
+    margin-top: 12px;
+    padding: 12px;
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #2ef7d0, #1ea3ff);
+    color: #001020;
+    font-weight: bold;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    box-shadow: 0 0 18px rgba(46,247,208,0.35);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.button:disabled {
+    background: #23354a;
+    color: #6b819f;
+    cursor: default;
+    box-shadow: none;
+}
+
+.button:not(:disabled):active {
+    transform: translateY(1px);
+    box-shadow: 0 0 10px rgba(46,247,208,0.6);
+}
+
+.statusStrip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.pill {
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    font-size: 11px;
+    color: #8fb7ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 46px;
+}
+
+.pill.active {
+    color: #00ff88;
+    text-shadow: 0 0 8px #00ff88;
+    border-color: rgba(0,255,136,0.4);
+    box-shadow: 0 0 18px rgba(0,255,136,0.18);
+}
+
+.scanner {
+    margin-top: 12px;
+    border-radius: 12px;
+    background: linear-gradient(90deg, rgba(0,60,120,0.5), rgba(0,120,240,0.12));
+    height: 44px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.scanner::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -40%;
+    width: 35%;
+    background: linear-gradient(90deg, transparent, rgba(0,255,136,0.35), transparent);
+    animation: scan 1.6s linear infinite;
+}
+
+@keyframes scan {
+    to { transform: translateX(200%); }
+}
+
+.scannerText {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    font-size: 12px;
+    color: #9cd6ff;
+    letter-spacing: 0.5px;
+}
+
+.log {
+    margin-top: 12px;
+    height: 120px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 10px;
+    font-family: monospace;
+    font-size: 11px;
+    color: #8eb6e8;
+    overflow: hidden;
+    position: relative;
+}
+
+.logInner {
+    position: absolute;
+    inset: 0;
+    overflow-y: hidden;
+}
+
+.logLine {
+    margin: 0 0 4px 0;
+}
+
+footer {
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #1e3a5f;
+    background: linear-gradient(90deg, rgba(0,0,0,0.7), rgba(0,30,60,0.6));
+    position: relative;
+    z-index: 2;
+}
+
+.timeline {
+    font-family: monospace;
+    color: #00ff88;
+    text-shadow: 0 0 8px #00ff88;
+    letter-spacing: 1px;
+}
+
+.statusMain {
+    color: #9cd6ff;
+    font-weight: bold;
+}
+
+.sonar {
+    position: absolute;
+    border: 1px solid rgba(0,255,136,0.45);
+    border-radius: 50%;
+    animation: sonarPing 2.4s infinite;
+    pointer-events: none;
+}
+
+@keyframes sonarPing {
+    from { width: 0; height: 0; opacity: 0.55; }
+    to { width: 420px; height: 420px; opacity: 0; }
+}
+
+.videoModal {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.72);
+    padding: 18px;
+}
+
+.videoPanel {
+    width: min(980px, calc(100vw - 36px));
+    border-radius: 14px;
+    border: 1px solid rgba(30, 58, 95, 0.9);
+    background: rgba(5, 15, 30, 0.96);
+    box-shadow: 0 0 30px rgba(0, 150, 255, 0.18);
+    overflow: hidden;
+}
+
+.videoTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(30, 58, 95, 0.6);
+}
+
+.videoTitle {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: #9cd6ff;
+    text-transform: uppercase;
+}
+
+.videoClose {
+    border: 1px solid #1e3a5f;
+    background: rgba(0, 0, 0, 0.2);
+    color: #9cd6ff;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+}
+
+.videoClose:hover {
+    border-color: #2ef7d0;
+    background: rgba(46, 247, 208, 0.08);
+}
+
+.videoPanel video {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: #000;
+}
+</style>
+</head>
+<body>
+<div class="frame">
+    <div class="nebula"></div>
+    <header>
+        <div class="title">TEST-12 · FULL WEB SIMULATION</div>
+        <div class="links">
+            <div class="frog" id="frog">🐸 SYSTEM FROG · IDLE</div>
+            <button class="linkBtn" id="videoBtn" type="button">Watch video</button>
+            <a class="linkBtn" href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="panel">
+            <h2>Available Apps (Mock)</h2>
+            <div class="appGrid" id="appGrid">
+                <div class="app">APP-01</div>
+                <div class="app">APP-02</div>
+                <div class="app">APP-03</div>
+                <div class="app">APP-04</div>
+                <div class="app">APP-05</div>
+                <div class="app">APP-06</div>
+                <div class="app">APP-07</div>
+                <div class="app">APP-08</div>
+                <div class="app">APP-09</div>
+                <div class="app">APP-10</div>
+                <div class="app">APP-11</div>
+                <div class="app">APP-12</div>
+            </div>
+            <div class="statusStrip">
+                <div class="pill" id="pillDrop">Drag/Drop Sim</div>
+                <div class="pill" id="pillValidate">Validation</div>
+                <div class="pill" id="pillSession">Session</div>
+                <div class="pill" id="pillComplete">Completion</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Your Test Slot</h2>
+            <div class="dropZone" id="dropZone"></div>
+            <button class="button" id="startBtn" disabled>START SESSION</button>
+            <div class="scanner" id="scanner">
+                <div class="scannerText" id="scannerText">IDLE · STANDBY</div>
+            </div>
+            <div class="log">
+                <div class="logInner" id="log"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="timeline" id="timeline">DAY 0 / 14 · WAITING</div>
+        <div class="statusMain">Status: <span id="status">NO SESSION</span></div>
+    </footer>
+</div>
+
+<div id="videoModal" class="videoModal" hidden>
+    <div class="videoPanel" role="dialog" aria-modal="true" aria-label="Video">
+        <div class="videoTop">
+            <div class="videoTitle">Video</div>
+            <button class="videoClose" id="videoClose" type="button">Close</button>
+        </div>
+        <video id="videoEl" controls playsinline preload="metadata" poster="/assets/hero.jpg">
+            <source src="/assets/webvid.mp4" type="video/mp4" />
+        </video>
+    </div>
+</div>
+
+<script>
+const dropZone = document.getElementById("dropZone");
+const startBtn = document.getElementById("startBtn");
+const timeline = document.getElementById("timeline");
+const statusEl = document.getElementById("status");
+const log = document.getElementById("log");
+const scannerText = document.getElementById("scannerText");
+const frog = document.getElementById("frog");
+const pillDrop = document.getElementById("pillDrop");
+const pillValidate = document.getElementById("pillValidate");
+const pillSession = document.getElementById("pillSession");
+const pillComplete = document.getElementById("pillComplete");
+const videoBtn = document.getElementById("videoBtn");
+const videoModal = document.getElementById("videoModal");
+const videoClose = document.getElementById("videoClose");
+const videoEl = document.getElementById("videoEl");
+
+let dropped = false;
+let started = false;
+let day = 0;
+let sonar;
+let activeApp = null;
+const slots = [];
+
+function openVideo() {
+    videoModal.removeAttribute("hidden");
+    try { videoEl.play(); } catch {}
+}
+
+function closeVideo() {
+    try { videoEl.pause(); } catch {}
+    videoModal.setAttribute("hidden", "");
+}
+
+videoBtn.addEventListener("click", openVideo);
+videoClose.addEventListener("click", closeVideo);
+videoModal.addEventListener("click", (e) => {
+    if (e.target === videoModal) closeVideo();
+});
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !videoModal.hasAttribute("hidden")) closeVideo();
+});
+
+function logLine(text) {
+    const line = document.createElement("div");
+    line.className = "logLine";
+    line.textContent = text;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+}
+
+function setPill(pill) {
+    [pillDrop, pillValidate, pillSession, pillComplete].forEach(p => p.classList.remove("active"));
+    pill.classList.add("active");
+}
+
+function summonSonar() {
+    if (sonar) sonar.remove();
+    sonar = document.createElement("div");
+    sonar.className = "sonar";
+    sonar.style.left = "60%";
+    sonar.style.top = "50%";
+    document.querySelector(".frame").appendChild(sonar);
+}
+
+document.querySelectorAll(".app").forEach(app => {
+    app.addEventListener("click", () => {
+        activeApp = app.textContent;
+        logLine("Ready to place: " + activeApp);
+        setPill(pillDrop);
+    });
+});
+
+for (let i = 0; i < 12; i++) {
+    const badge = document.createElement("div");
+    badge.className = "slotBadge";
+    const reserved = i === 0;
+    badge.dataset.reserved = reserved ? "true" : "false";
+    badge.textContent = reserved ? "YOUR APP SLOT" : "ASSIGNED SLOT " + i;
+    badge.addEventListener("click", () => {
+        if (!activeApp || badge.textContent.indexOf("•") !== -1) return;
+        const label = reserved ? activeApp + " • YOUR APP" : "ASSIGNED: " + activeApp + " • LOCKED";
+        badge.textContent = label;
+        badge.style.boxShadow = "0 0 14px rgba(0,255,136,0.35)";
+        badge.style.borderColor = "rgba(0,255,136,0.4)";
+        dropZone.classList.add("active");
+        if (!dropped) {
+            dropped = true;
+            frog.textContent = "🐸 SYSTEM FROG · WATCHING";
+            statusEl.textContent = "APPS ACCEPTED";
+            scannerText.textContent = "VALIDATION STREAM LIVE";
+        }
+        pillValidate.classList.add("active");
+        logLine("Placed " + activeApp + " into " + (reserved ? "YOUR SLOT" : "assigned slot " + i));
+        const filled = Array.from(dropZone.children).every(s => s.textContent.indexOf("•") !== -1);
+        startBtn.disabled = !filled;
+        activeApp = null;
+    });
+    dropZone.appendChild(badge);
+    slots.push(badge);
+}
+
+startBtn.addEventListener("click", () => {
+    if (!dropped || started) return;
+    started = true;
+    startBtn.disabled = true;
+    setPill(pillSession);
+    frog.textContent = "🐸 SYSTEM FROG · VERIFYING";
+    statusEl.textContent = "SESSION ACTIVE";
+    scannerText.textContent = "TESTING · SIGNALS ON";
+    logLine("Session initialized · compressing 14 days.");
+    summonSonar();
+
+    const fastLog = [
+        "Live ping → store mirrors",
+        "Checksum sweep · OK",
+        "Peer seats synced",
+        "Telemetry stream: 12/12 alive",
+        "Fast-track light warming",
+        "Verification lattice steady",
+        "Integrity window locked",
+        "Cycle id anchored"
+    ];
+    let li = 0;
+    const logInterval = setInterval(() => {
+        logLine(fastLog[li % fastLog.length]);
+        li++;
+        if (li > 12) clearInterval(logInterval);
+    }, 260);
+
+    const dayInterval = setInterval(() => {
+        day++;
+        timeline.textContent = "DAY " + day + " / 14 · HYPER";
+        scannerText.textContent = "RUNNING DAY " + day + " SIGNALS";
+        if (day >= 14) {
+            clearInterval(dayInterval);
+            timeline.textContent = "DAY 14 / 14 · COMPLETE";
+            statusEl.textContent = "SESSION ENDED";
+            scannerText.textContent = "ALL SYSTEMS CLOSED";
+            setPill(pillComplete);
+            frog.textContent = "🐸 SYSTEM FROG · COMPLETE";
+            logLine("Session complete · all checks mirrored.");
+            dropZone.querySelectorAll(".slotBadge").forEach(b => b.textContent += " · VERIFIED");
+        }
+    }, 140);
+});
+</script>
+</body>
+</html>

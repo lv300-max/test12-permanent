@@ -1,0 +1,12 @@
+IMPLEMENTATION NOTES
+
+Keep it boring.
+Keep it deterministic.
+Keep it small.
+
+If the system still works when:
+- Nobody clicks anything
+- Nobody participates
+- Nobody likes anything
+
+Then it is correct.
