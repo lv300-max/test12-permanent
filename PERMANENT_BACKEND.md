@@ -15,6 +15,7 @@ To make it permanent (stable URL 24/7), deploy the backend to Render using the i
 
 - Backend health check: `https://YOUR-BACKEND/api/health` should return `{"ok":true}`
 - Website config: `https://test-12test.netlify.app/config.json` should show your backend URL
+- `./set-backend-url.sh ...` also writes a numbered zip like `netlify-upload-001.zip` (use the highest number); `netlify-upload.zip` is always the latest copy.
 
 ## Notes
 
