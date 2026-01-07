@@ -50,9 +50,10 @@ class _TerminalBoardScreenState extends State<TerminalBoardScreen> with SingleTi
 
     _saluteC.forward(from: 0);
 
-    HapticFeedback.lightImpact();
+    HapticFeedback.heavyImpact();
     try {
       await _chirp.stop();
+      await _chirp.setVolume(1.0);
       await _chirp.play(
         AssetSource('sfx/coqui.wav'),
         volume: 1.0,
@@ -68,9 +69,10 @@ class _TerminalBoardScreenState extends State<TerminalBoardScreen> with SingleTi
   }
 
   Future<void> _playSonarPing() async {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.heavyImpact();
     try {
       await _chirp.stop();
+      await _chirp.setVolume(1.0);
       await _chirp.play(
         AssetSource('sfx/coqui.wav'),
         volume: 1.0,
