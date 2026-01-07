@@ -761,7 +761,8 @@
                 - If it still says “no access”, you’re not on the allowed members list yet.
               </div>
             </details>
-            <div class="micro"><a href="/privacy">Privacy</a></div>
+            <a data-donate-link class="btn secondary mini locked-btn" aria-disabled="true">DONATE TO GROW</a>
+            <div class="micro"><a href="/privacy">Privacy</a> • <a data-donate-link class="donate-inline locked-btn" aria-disabled="true">Donate to grow</a></div>
           </div>
         </div>
 
@@ -787,6 +788,7 @@
             <li>No reviews required. No noise. Just verification.</li>
           </ul>
           <div class="micro">Tip: Set a daily ping. Two minutes a day beats willpower.</div>
+          <div class="micro"><span class="chip">ProDev</span> More than one placement? Packages run sequential drops (3/5/7/10).</div>
         </div>
 
         <div class="card full" aria-label="Make it automatic">
@@ -815,6 +817,9 @@
           <div class="tags">
             <span class="tag"><span class="dot"></span> Coming soon: subscriptions</span>
             <span class="tag"><span class="dot"></span> Coming soon: multi‑session rotations</span>
+          </div>
+          <div class="micro" style="margin-top: 10px">
+            <a data-donate-link class="donate-inline locked-btn" aria-disabled="true">Donate to grow</a> keeps sessions running. Never required.
           </div>
         </div>
 
@@ -863,6 +868,7 @@
 	              Choose a package when you want more than one placement.
 	              Each app = one 14‑day drop into the queue (drops run sequentially).
 	            </div>
+              <div class="micro"><strong>ProDev perks:</strong> multiple placements • sequential drops • direct support</div>
 	            <div class="divider"></div>
 	            <div class="micro"><span class="chip">Live</span> 3 / 5 / 7 / 10 app packages</div>
 
@@ -892,15 +898,14 @@
               <div class="pro-grid" style="margin-top: 12px">
                 <a class="btn mini" href="/submit">SUBMIT + (OPTIONAL) BUNDLE ID</a>
                 <a class="btn mini secondary" href="/privacy">PRIVACY</a>
+                <a data-donate-link class="btn mini secondary locked-btn" aria-disabled="true">DONATE TO GROW</a>
               </div>
 	          </details>
 
-          <details class="locked" style="margin-top: 12px">
-            <summary>Support sessions (optional)</summary>
-            <div class="micro">
-              Small tips help run more sessions + research. Never required.
-            </div>
-            <a id="donateBtn" class="btn secondary mini locked-btn" aria-disabled="true">SUPPORT (OPTIONAL)</a>
+          <details style="margin-top: 12px">
+            <summary>Donate to grow</summary>
+            <div class="micro">Donate to grow: more sessions + research. Never required.</div>
+            <a id="donateBtn" data-donate-link class="btn secondary mini locked-btn" aria-disabled="true">DONATE TO GROW</a>
           </details>
         </div>
       </div>
@@ -926,7 +931,7 @@
       const PLEDGE_KEY = "test12_pledge_2min_v1";
       const REMINDER_TIME_KEY = "test12_reminder_time_v1";
       const PLAN_KEY = "test12_plan_v1";
-      const DONATE_URL = "";
+      const DONATE_URL = "https://venmo.com/u/LUIS-VELAZQUEZ-300";
       const PRO_EARLY_KEY = "test12_pro_early_access_v1";
       const PRO_PREVIEW_VIEWS_KEY = "test12_pro_preview_views_left_v1";
 
@@ -1207,12 +1212,13 @@
         }
 
         if (DONATE_URL) {
-          const d = document.getElementById("donateBtn");
-          if (d) {
+          const links = document.querySelectorAll("[data-donate-link]");
+          for (const d of links) {
             d.classList.remove("locked-btn");
             d.setAttribute("href", DONATE_URL);
+            d.setAttribute("target", "_blank");
+            d.setAttribute("rel", "noopener");
             d.removeAttribute("aria-disabled");
-            d.textContent = "SUPPORT";
           }
         }
 

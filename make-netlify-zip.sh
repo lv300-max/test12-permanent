@@ -23,7 +23,7 @@ done
 ZIP_NUMBERED_PATH="$ROOT_DIR/netlify-upload-$(printf '%03d' "$next_seq").zip"
 
 rm -f "$ZIP_LATEST_PATH"
-(cd "$WEB_DIR" && zip -r "$ZIP_NUMBERED_PATH" index.html privacy.html submit.html config.json netlify.toml _redirects _headers assets -x "*/.DS_Store" -x ".DS_Store" >/dev/null)
+(cd "$WEB_DIR" && zip -r "$ZIP_NUMBERED_PATH" index.html privacy.html moneyhopper-privacy.html submit.html config.json netlify.toml _redirects _headers assets -x "*/.DS_Store" -x ".DS_Store" >/dev/null)
 cp -f "$ZIP_NUMBERED_PATH" "$ZIP_LATEST_PATH"
 
 echo "Wrote: $ZIP_NUMBERED_PATH"
