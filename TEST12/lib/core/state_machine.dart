@@ -1,783 +1,777 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'models.dart';
+import 'theme.dart';
 
 class Try12Machine extends ChangeNotifier {
-  static const _prefsKeyUserId = 't12_user_id';
-  static const _prefsKeyMyAppId = 't12_my_app_id';
-  static const _prefsKeyDenied = 't12_denied';
-  static const _prefsKeyAppsJson = 't12_apps_json';
-  static const _prefsKeyQueueJson = 't12_queue_json';
-  static const _prefsKeySessionJson = 't12_session_json';
-  static const _prefsKeyAdminLogJson = 't12_admin_log_json';
-  static const _prefsKeyNextAppSeq = 't12_next_app_seq';
-  static const _prefsKeyDownloadedJson = 't12_downloaded_json';
-  static const _prefsKeyApiOverride = 't12_api_base_url_override';
-
-  static const Duration sessionLength = Duration(days: 14);
-
-  static const String _apiBaseUrl = String.fromEnvironment(
-    'TRY12_API_BASE_URL',
-    defaultValue: '',
-  );
-  static const String _configUrl = String.fromEnvironment(
-    'TRY12_CONFIG_URL',
-    defaultValue: 'https://test-12test.netlify.app/config.json',
-  );
-  static const String _adminToken = String.fromEnvironment(
-    'TRY12_ADMIN_TOKEN',
-    defaultValue: '',
-  );
-  static const bool _demoAlways = bool.fromEnvironment(
-    'TRY12_DEMO_ALWAYS',
-    defaultValue: true,
-  );
-  static const bool _autoSubmitRemote = bool.fromEnvironment(
-    'TRY12_AUTO_SUBMIT_REMOTE',
-    defaultValue: true,
-  );
-
-  Try12Route route = Try12Route.queue;
-  bool denied = false;
-
-  String? userId;
-  String? myAppId;
-  int? _remoteMyQueuePosition;
-
-  final Set<String> downloadedAppIds = {};
-
-  final Map<String, Test12AppMeta> appsById = {};
-  final List<Test12QueueEntry> queue = [];
-  Test12Session? session;
-  final List<AdminLogEntry> adminLog = [];
+  Try12Route route = Try12Route.gateReadFirst;
 
   SharedPreferences? _prefs;
-  Timer? _ticker;
-  bool _refreshing = false;
-  String _apiBaseUrlOverride = '';
 
-  String get apiBaseUrl {
-    final o = _apiBaseUrlOverride.trim();
-    if (o.isNotEmpty) return o;
-    return _apiBaseUrl.trim();
-  }
+  // Backend
+  String apiBaseUrl = '';
+  bool apiReady = false;
+  String? _manualApiBaseUrl;
 
-  bool get remoteEnabled => apiBaseUrl.isNotEmpty;
-  bool get adminEnabled => _adminToken.trim().isNotEmpty;
+  // Identity (server key)
+  String? userId;
+
+  // Remote snapshot (raw JSON payload from backend)
+  Map<String, dynamic>? _payload;
+
+  // UI list (assignment map order)
+  final List<MockApp> assigned = [];
+  MockApp? myAppCard;
+  String? selectedAppId;
+
+  // Gate scan theatre
+  bool scanning = false;
+  String scanLine = '> READY';
+  bool scanRedMoment = false;
+
+  // Network state
+  bool loading = false;
+  String? lastError;
+
+  // Polling + heartbeat
+  Timer? _pollTimer;
+  Timer? _heartbeatTimer;
+
+  // Session start “buzz”
+  String? _lastBuzzedSessionId;
+  bool buzzPending = false;
+  String? buzzMessage;
+
+  // Fairness “salute” (12/12 complete)
+  String? _lastSalutedSessionId;
+  bool salutePending = false;
+  String? saluteMessage;
 
   Future<void> load(SharedPreferences prefs) async {
     _prefs = prefs;
 
-    denied = prefs.getBool(_prefsKeyDenied) ?? false;
-    userId = prefs.getString(_prefsKeyUserId);
-    myAppId = prefs.getString(_prefsKeyMyAppId);
-    _apiBaseUrlOverride = prefs.getString(_prefsKeyApiOverride) ?? '';
-    downloadedAppIds
-      ..clear()
-      ..addAll(_loadDownloaded(prefs));
-
-    await _maybeFetchRemoteConfig();
-
-    if (remoteEnabled) {
-      await _ensureRemoteReady();
-      _startTicker();
-      return;
-    }
-
-    if (_demoAlways) {
-      seedDemoSession();
-      _startTicker();
-      return;
-    }
-
-    appsById
-      ..clear()
-      ..addAll(_loadApps(prefs));
-    queue
-      ..clear()
-      ..addAll(_loadQueue(prefs));
-    session = _loadSession(prefs);
-    adminLog
-      ..clear()
-      ..addAll(_loadAdminLog(prefs));
-
-    _reconcileState(DateTime.now());
-    _startTicker();
-    notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
-
-  bool get hasSubmission => myAppId != null && appsById.containsKey(myAppId);
-
-  Test12AppMeta? get myApp => myAppId == null ? null : appsById[myAppId!];
-
-  bool get hasActiveSession => session?.status == SessionStatus.active;
-
-  List<String> get sessionAppIds =>
-      hasActiveSession ? List.unmodifiable(session!.appIds) : const [];
-
-  List<String> get assignmentMapAppIds => sessionAppIds;
-
-  int? get myQueuePosition {
-    if (remoteEnabled) return _remoteMyQueuePosition;
-    final mine = myAppId;
-    if (mine == null) return null;
-    final waiting = queue.where((q) => q.status == QueueEntryStatus.waiting).toList();
-    for (int i = 0; i < waiting.length; i++) {
-      if (waiting[i].appId == mine) return i + 1;
-    }
-    return null;
-  }
-
-  Future<void> submitAndVerify({
-    required String userIdInput,
-    required String appNameInput,
-    required String storeLinkInput,
-  }) async {
-    if (denied) return;
-
-    final normalizedUserId = userIdInput.trim();
-    final normalizedAppName = appNameInput.trim();
-    final normalizedStoreLink = _normalizeLink(storeLinkInput);
-
-    if (normalizedUserId.isEmpty ||
-        normalizedAppName.isEmpty ||
-        !_isLinkValid(normalizedStoreLink)) {
-      await _deny();
-      return;
-    }
-
-    if (remoteEnabled) {
-      userId = normalizedUserId;
-      await _saveIdentityOnly();
-      await _submitRemote(
-        userId: normalizedUserId,
-        appName: normalizedAppName,
-        storeLink: normalizedStoreLink,
-      );
-      return;
-    }
-
-    userId = normalizedUserId;
-    if (hasSubmission) {
-      route = Try12Route.queue;
-      _save();
-      notifyListeners();
-      return;
-    }
-
-    final newAppId = _nextAppId();
-    myAppId = newAppId;
-
-    appsById[newAppId] = Test12AppMeta(
-      appId: newAppId,
-      userId: normalizedUserId,
-      appName: normalizedAppName,
-      storeLink: normalizedStoreLink,
-    );
-    queue.add(
-      Test12QueueEntry(
-        appId: newAppId,
-        userId: normalizedUserId,
-        enteredAtMs: DateTime.now().millisecondsSinceEpoch,
-        status: QueueEntryStatus.waiting,
-      ),
-    );
-
-    _reconcileState(DateTime.now());
-    route = Try12Route.queue;
-    _save();
-    notifyListeners();
-  }
-
-  Future<void> refresh() async {
-    if (!remoteEnabled) {
-      _reconcileState(DateTime.now());
-      notifyListeners();
-      return;
-    }
-
-    await _ensureRemoteReady();
-  }
-
-  void goToQueue() {
-    if (denied) {
-      route = Try12Route.denied;
-    } else if (hasSubmission) {
-      route = Try12Route.queue;
-    } else {
-      route = Try12Route.gate;
-    }
-    notifyListeners();
-  }
-
-  bool isDownloaded(String appId) => downloadedAppIds.contains(appId);
-
-  Future<void> setDownloaded(String appId, bool downloaded) async {
-    if (downloaded) {
-      downloadedAppIds.add(appId);
-    } else {
-      downloadedAppIds.remove(appId);
-    }
-    await _saveIdentityOnly();
-    notifyListeners();
-  }
-
-  void seedDemoSession() {
-    if (remoteEnabled) return;
-    denied = false;
-
-    final now = DateTime.now();
-    final startMs = now.millisecondsSinceEpoch;
-    final endMs = now.add(sessionLength).millisecondsSinceEpoch;
-
-    appsById.clear();
-    queue.clear();
-    adminLog.clear();
-    session = null;
-
-    final existingUser = (userId ?? '').trim();
-    userId = existingUser.isEmpty ? 'demo' : existingUser;
-
-    myAppId = 'ME';
-    appsById[myAppId!] = Test12AppMeta(
-      appId: myAppId!,
-      userId: userId!,
-      appName: 'YOU',
-      storeLink: 'try12://mock/ME',
-    );
-    queue.add(
-      Test12QueueEntry(
-        appId: myAppId!,
-        userId: userId!,
-        enteredAtMs: startMs,
-        status: QueueEntryStatus.waiting,
-      ),
-    );
-
-    final demoIds = <String>[];
-    for (int i = 1; i <= 12; i++) {
-      final id = 'P${i.toString().padLeft(2, '0')}';
-      demoIds.add(id);
-      appsById[id] = Test12AppMeta(
-        appId: id,
-        userId: 'demo_user_$i',
-        appName: 'APP $i',
-        storeLink: 'try12://mock/$id',
-      );
-      queue.add(
-        Test12QueueEntry(
-          appId: id,
-          userId: 'demo_user_$i',
-          enteredAtMs: startMs + i,
-          status: QueueEntryStatus.promoted,
-        ),
+    final savedRoute = prefs.getString('route');
+    if (savedRoute != null) {
+      route = Try12Route.values.firstWhere(
+        (x) => x.name == savedRoute,
+        orElse: () => Try12Route.gateReadFirst,
       );
     }
 
-    session = Test12Session(
-      sessionId: 'DEMO$startMs',
-      startTimeMs: startMs,
-      endTimeMs: endMs,
-      status: SessionStatus.active,
-      appIds: demoIds,
-    );
+    apiBaseUrl = prefs.getString('apiBaseUrl') ?? '';
+    _manualApiBaseUrl = prefs.getString('manualApiBaseUrl');
+    userId = prefs.getString('userId');
+    _lastBuzzedSessionId = prefs.getString('lastBuzzedSessionId');
+    _lastSalutedSessionId = prefs.getString('lastSalutedSessionId');
 
-    route = Try12Route.queue;
-    _save();
+    await _ensureApiBaseUrl();
+
+    if (userId != null && apiBaseUrl.isNotEmpty) {
+      await refresh(silent: true);
+      _startTimers();
+    }
+
     notifyListeners();
-  }
-
-  void goToAssignmentMap() {
-    route = Try12Route.assignmentMap;
-    notifyListeners();
-  }
-
-  void goToAdmin() {
-    route = Try12Route.admin;
-    notifyListeners();
-  }
-
-  Future<void> adminRemoveApp(String appId) async {
-    if (remoteEnabled) {
-      if (!adminEnabled) return;
-      await _removeRemoteApp(appId);
-      await refreshAdminState();
-      return;
-    }
-
-    if (!appsById.containsKey(appId)) return;
-    if (session?.status == SessionStatus.active && session!.appIds.contains(appId)) {
-      return;
-    }
-
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
-    final idx = queue.indexWhere((q) => q.appId == appId);
-    if (idx != -1) {
-      queue[idx] = Test12QueueEntry(
-        appId: queue[idx].appId,
-        userId: queue[idx].userId,
-        enteredAtMs: queue[idx].enteredAtMs,
-        status: QueueEntryStatus.removed,
-      );
-    }
-    appsById.remove(appId);
-
-    if (myAppId == appId) {
-      myAppId = null;
-    }
-
-    adminLog.add(
-      AdminLogEntry(
-        atMs: nowMs,
-        action: 'remove_app',
-        details: 'app_id=$appId',
-      ),
-    );
-
-    _reconcileState(DateTime.now());
-    _save();
-    notifyListeners();
-  }
-
-  Future<void> refreshAdminState() async {
-    if (!remoteEnabled || !adminEnabled) return;
-    final uri = Uri.parse('$apiBaseUrl/api/admin/state');
-    final resp = await http.get(uri, headers: {'X-Admin-Token': _adminToken});
-    if (resp.statusCode != 200) return;
-    final decoded = jsonDecode(resp.body);
-    if (decoded is! Map) return;
-    final m = decoded.cast<String, dynamic>();
-
-    final appsRaw = m['apps_by_id'];
-    if (appsRaw is Map) {
-      appsById
-        ..clear()
-        ..addAll(
-          appsRaw.cast<String, dynamic>().map(
-                (k, v) => MapEntry(
-                  k,
-                  Test12AppMeta.fromJson((v as Map).cast<String, dynamic>()),
-                ),
-              ),
-        );
-    }
-
-    final queueRaw = m['queue'];
-    if (queueRaw is List) {
-      queue
-        ..clear()
-        ..addAll(
-          queueRaw
-              .whereType<Map>()
-              .map((x) => Test12QueueEntry.fromJson(x.cast<String, dynamic>())),
-        );
-    }
-
-    final sessRaw = m['session'];
-    if (sessRaw is Map) {
-      session = Test12Session.fromJson(sessRaw.cast<String, dynamic>());
-    } else {
-      session = null;
-    }
-
-    final logRaw = m['admin_log'];
-    if (logRaw is List) {
-      adminLog
-        ..clear()
-        ..addAll(
-          logRaw
-              .whereType<Map>()
-              .map((x) => AdminLogEntry.fromJson(x.cast<String, dynamic>())),
-        );
-    }
-
-    myAppId = myAppId; // unchanged; admin view does not redefine identity.
-    route = Try12Route.admin;
-    notifyListeners();
-  }
-
-  Future<void> _deny() async {
-    denied = true;
-    route = Try12Route.denied;
-    if (!remoteEnabled) _save();
-    await _saveIdentityOnly();
-    notifyListeners();
-  }
-
-  void _startTicker() {
-    _ticker?.cancel();
-    _ticker = Timer.periodic(const Duration(seconds: 10), (_) {
-      if (remoteEnabled) {
-        if (_refreshing) return;
-        _refreshing = true;
-        refresh().whenComplete(() {
-          _refreshing = false;
-        });
-        return;
-      }
-      _reconcileState(DateTime.now());
-    });
-  }
-
-  Future<void> _ensureRemoteReady() async {
-    if (!remoteEnabled) return;
-    if (denied) {
-      route = Try12Route.denied;
-      notifyListeners();
-      return;
-    }
-
-    final u = (userId ?? '').trim();
-    if (u.isEmpty) {
-      userId = _generateUserId();
-      await _saveIdentityOnly();
-    }
-
-    if (_autoSubmitRemote) {
-      await _submitRemote(
-        userId: userId!,
-        appName: 'DEMO APP',
-        storeLink: 'try12://mock/ME',
-      );
-      return;
-    }
-
-    await _fetchRemoteUserState(userId!);
-  }
-
-  Future<void> _maybeFetchRemoteConfig() async {
-    if (_apiBaseUrl.trim().isNotEmpty) return; // compile-time override wins
-    final url = _configUrl.trim();
-    if (url.isEmpty) return;
-
-    try {
-      final uri = Uri.parse(url);
-      final resp = await http.get(uri).timeout(const Duration(seconds: 3));
-      if (resp.statusCode != 200) return;
-      final decoded = jsonDecode(resp.body);
-      if (decoded is! Map) return;
-      final m = decoded.cast<String, dynamic>();
-      final raw = m['api_base_url'] ?? m['apiBaseUrl'] ?? m['apiBaseURL'];
-      final base = raw is String ? raw.trim() : '';
-      if (base.isEmpty) {
-        _apiBaseUrlOverride = '';
-        await _prefs?.remove(_prefsKeyApiOverride);
-        return;
-      }
-
-      if (_apiBaseUrlOverride != base) {
-        _apiBaseUrlOverride = base;
-        await _prefs?.setString(_prefsKeyApiOverride, _apiBaseUrlOverride);
-      }
-    } catch (_) {
-      return;
-    }
-  }
-
-  String _generateUserId() {
-    final now = DateTime.now().microsecondsSinceEpoch;
-    final rand = Random().nextInt(1 << 32);
-    final token = (now ^ rand).toRadixString(36).toUpperCase();
-    return 'U$token';
-  }
-
-  void _reconcileState(DateTime now) {
-    var changed = false;
-
-    if (denied) {
-      if (route != Try12Route.denied) {
-        route = Try12Route.denied;
-        changed = true;
-      }
-      if (changed) notifyListeners();
-      return;
-    }
-
-    final cur = session;
-    if (cur != null && cur.status == SessionStatus.active) {
-      if (now.millisecondsSinceEpoch >= cur.endTimeMs) {
-        session = Test12Session(
-          sessionId: cur.sessionId,
-          startTimeMs: cur.startTimeMs,
-          endTimeMs: cur.endTimeMs,
-          status: SessionStatus.complete,
-          appIds: cur.appIds,
-        );
-        _completeSessionApps(cur.appIds);
-        session = null;
-        changed = true;
-        _save();
-      }
-    }
-
-    if (session == null) {
-      final opened = _tryOpenSession(now);
-      if (opened) {
-        changed = true;
-        _save();
-      }
-    }
-
-    if (!hasSubmission && route != Try12Route.gate) {
-      route = Try12Route.gate;
-      changed = true;
-    } else if (hasSubmission && route == Try12Route.gate) {
-      route = Try12Route.queue;
-      changed = true;
-    }
-
-    if (changed) notifyListeners();
-  }
-
-  bool _tryOpenSession(DateTime now) {
-    final waiting = queue.where((q) => q.status == QueueEntryStatus.waiting).toList();
-    if (waiting.length < 12) return false;
-
-    waiting.sort((a, b) => a.enteredAtMs.compareTo(b.enteredAtMs));
-    final picked = waiting.take(12).map((e) => e.appId).toList(growable: false);
-
-    for (int i = 0; i < queue.length; i++) {
-      final q = queue[i];
-      if (picked.contains(q.appId) && q.status == QueueEntryStatus.waiting) {
-        queue[i] = Test12QueueEntry(
-          appId: q.appId,
-          userId: q.userId,
-          enteredAtMs: q.enteredAtMs,
-          status: QueueEntryStatus.promoted,
-        );
-      }
-    }
-
-    final startMs = now.millisecondsSinceEpoch;
-    final endMs = now.add(sessionLength).millisecondsSinceEpoch;
-    final sessionId = 'S$startMs';
-    session = Test12Session(
-      sessionId: sessionId,
-      startTimeMs: startMs,
-      endTimeMs: endMs,
-      status: SessionStatus.active,
-      appIds: picked,
-    );
-    return true;
-  }
-
-  void _completeSessionApps(List<String> appIds) {
-    for (final id in appIds) {
-      appsById.remove(id);
-      final idx = queue.indexWhere((q) => q.appId == id);
-      if (idx != -1) queue.removeAt(idx);
-      if (myAppId == id) myAppId = null;
-    }
   }
 
   void _save() {
     final p = _prefs;
     if (p == null) return;
-
-    p.setBool(_prefsKeyDenied, denied);
+    p.setString('route', route.name);
+    p.setString('apiBaseUrl', apiBaseUrl);
+    if (_manualApiBaseUrl != null && _manualApiBaseUrl!.trim().isNotEmpty) {
+      p.setString('manualApiBaseUrl', _manualApiBaseUrl!.trim());
+    } else {
+      p.remove('manualApiBaseUrl');
+    }
     if (userId != null) {
-      p.setString(_prefsKeyUserId, userId!);
+      p.setString('userId', userId!);
     } else {
-      p.remove(_prefsKeyUserId);
+      p.remove('userId');
     }
-    if (myAppId != null) {
-      p.setString(_prefsKeyMyAppId, myAppId!);
-    } else {
-      p.remove(_prefsKeyMyAppId);
-    }
-    p.setString(_prefsKeyDownloadedJson, jsonEncode(downloadedAppIds.toList()..sort()));
 
-    p.setString(_prefsKeyAppsJson, jsonEncode(appsById.map((k, v) => MapEntry(k, v.toJson()))));
-    p.setString(_prefsKeyQueueJson, jsonEncode(queue.map((q) => q.toJson()).toList()));
-    if (session == null) {
-      p.remove(_prefsKeySessionJson);
+    if (_lastBuzzedSessionId != null) {
+      p.setString('lastBuzzedSessionId', _lastBuzzedSessionId!);
     } else {
-      p.setString(_prefsKeySessionJson, jsonEncode(session!.toJson()));
+      p.remove('lastBuzzedSessionId');
     }
-    p.setString(_prefsKeyAdminLogJson, jsonEncode(adminLog.map((e) => e.toJson()).toList()));
+
+    if (_lastSalutedSessionId != null) {
+      p.setString('lastSalutedSessionId', _lastSalutedSessionId!);
+    } else {
+      p.remove('lastSalutedSessionId');
+    }
   }
 
-  Future<void> _saveIdentityOnly() async {
-    final p = _prefs;
-    if (p == null) return;
-    await p.setBool(_prefsKeyDenied, denied);
-    if (userId != null) {
-      await p.setString(_prefsKeyUserId, userId!);
-    } else {
-      await p.remove(_prefsKeyUserId);
-    }
-    if (myAppId != null) {
-      await p.setString(_prefsKeyMyAppId, myAppId!);
-    } else {
-      await p.remove(_prefsKeyMyAppId);
-    }
-    await p.setString(_prefsKeyDownloadedJson, jsonEncode(downloadedAppIds.toList()..sort()));
-  }
-
-  Map<String, Test12AppMeta> _loadApps(SharedPreferences prefs) {
-    final raw = prefs.getString(_prefsKeyAppsJson);
-    if (raw == null || raw.isEmpty) return {};
-    final decoded = jsonDecode(raw);
-    if (decoded is! Map<String, dynamic>) return {};
-    return decoded.map((k, v) => MapEntry(k, Test12AppMeta.fromJson((v as Map).cast<String, dynamic>())));
-  }
-
-  List<Test12QueueEntry> _loadQueue(SharedPreferences prefs) {
-    final raw = prefs.getString(_prefsKeyQueueJson);
-    if (raw == null || raw.isEmpty) return const [];
-    final decoded = jsonDecode(raw);
-    if (decoded is! List) return const [];
-    return decoded
-        .whereType<Map>()
-        .map((m) => Test12QueueEntry.fromJson(m.cast<String, dynamic>()))
-        .toList();
-  }
-
-  Test12Session? _loadSession(SharedPreferences prefs) {
-    final raw = prefs.getString(_prefsKeySessionJson);
-    if (raw == null || raw.isEmpty) return null;
-    final decoded = jsonDecode(raw);
-    if (decoded is! Map) return null;
-    return Test12Session.fromJson(decoded.cast<String, dynamic>());
-  }
-
-  Set<String> _loadDownloaded(SharedPreferences prefs) {
-    final raw = prefs.getString(_prefsKeyDownloadedJson);
-    if (raw == null || raw.isEmpty) return {};
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is List) {
-        return decoded.map((e) => e.toString()).toSet();
+  Future<void> _ensureApiBaseUrl() async {
+    final manual = _manualApiBaseUrl;
+    if (manual != null && manual.trim().isNotEmpty) {
+      final normalized = _normalizeBaseUrl(manual);
+      if (apiBaseUrl != normalized || _manualApiBaseUrl != normalized) {
+        apiBaseUrl = normalized;
+        _manualApiBaseUrl = normalized;
+        _save();
       }
-    } catch (_) {}
-    return {};
+      apiReady = true;
+      return;
+    }
+
+    const envBase = String.fromEnvironment('TRY12_API_BASE_URL');
+    if (envBase.trim().isNotEmpty) {
+      final normalized = _normalizeBaseUrl(envBase);
+      if (apiBaseUrl != normalized) {
+        apiBaseUrl = normalized;
+        _save();
+      }
+      apiReady = true;
+      return;
+    }
+
+    if (apiBaseUrl.trim().isNotEmpty) {
+      apiBaseUrl = _normalizeBaseUrl(apiBaseUrl);
+      apiReady = true;
+      return;
+    }
+
+    final resolved = await _resolveApiBaseUrl();
+    apiBaseUrl = resolved;
+    apiReady = apiBaseUrl.isNotEmpty;
+    _save();
   }
 
-
-  List<AdminLogEntry> _loadAdminLog(SharedPreferences prefs) {
-    final raw = prefs.getString(_prefsKeyAdminLogJson);
-    if (raw == null || raw.isEmpty) return const [];
-    final decoded = jsonDecode(raw);
-    if (decoded is! List) return const [];
-    return decoded
-        .whereType<Map>()
-        .map((m) => AdminLogEntry.fromJson(m.cast<String, dynamic>()))
-        .toList();
+  Future<void> setApiBaseUrl(String raw) async {
+    final normalized = _normalizeBaseUrl(raw);
+    _manualApiBaseUrl = normalized.isEmpty ? null : normalized;
+    apiBaseUrl = normalized;
+    apiReady = normalized.isNotEmpty;
+    _save();
+    notifyListeners();
+    await refresh(silent: true);
+    notifyListeners();
   }
 
-  String _nextAppId() {
-    final p = _prefs;
-    final cur = p?.getInt(_prefsKeyNextAppSeq) ?? 1;
-    p?.setInt(_prefsKeyNextAppSeq, cur + 1);
-    return 'A${cur.toString().padLeft(4, '0')}';
+  Future<void> useConfigApiBaseUrl() async {
+    _manualApiBaseUrl = null;
+    apiBaseUrl = '';
+    apiReady = false;
+    _save();
+    await _ensureApiBaseUrl();
+    notifyListeners();
+    await refresh(silent: true);
+    notifyListeners();
   }
 
-  Future<void> _submitRemote({
-    required String userId,
-    required String appName,
-    required String storeLink,
-  }) async {
-    final uri = Uri.parse('$apiBaseUrl/api/submit');
-    final resp = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'user_id': userId, 'app_name': appName, 'store_link': storeLink}),
+  static String _normalizeBaseUrl(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return '';
+    return trimmed.replaceAll(RegExp(r'/*$'), '');
+  }
+
+  Future<String> _resolveApiBaseUrl() async {
+    const envBase = String.fromEnvironment('TRY12_API_BASE_URL');
+    if (envBase.trim().isNotEmpty) return _normalizeBaseUrl(envBase);
+
+    const configUrl = String.fromEnvironment(
+      'TRY12_CONFIG_URL',
+      defaultValue: 'https://test-12test.netlify.app/config.json',
     );
 
-    if (resp.statusCode != 200) {
-      await _deny();
+    try {
+      final r = await http
+          .get(Uri.parse(configUrl), headers: const {'Cache-Control': 'no-store'})
+          .timeout(const Duration(seconds: 6));
+      if (r.statusCode < 200 || r.statusCode >= 300) return '';
+      final j = jsonDecode(r.body);
+      if (j is! Map) return '';
+      final base = (j['api_base_url'] ?? '').toString().trim();
+      return _normalizeBaseUrl(base);
+    } catch (_) {
+      return '';
+    }
+  }
+
+  int? get queuePosition {
+    final v = _payload?['my_queue_position'];
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return null;
+  }
+
+  Map<String, dynamic>? get _myApp {
+    final v = _payload?['my_app'];
+    return v is Map<String, dynamic> ? v : null;
+  }
+
+  String? get myAppId {
+    final v = _payload?['my_app_id'];
+    return v is String && v.isNotEmpty ? v : null;
+  }
+
+  Map<String, dynamic>? get session {
+    final v = _payload?['session'];
+    return v is Map<String, dynamic> ? v : null;
+  }
+
+  Map<String, dynamic> get appsById {
+    final v = _payload?['apps_by_id'];
+    return v is Map ? v.cast<String, dynamic>() : const <String, dynamic>{};
+  }
+
+  String? get sessionStatus {
+    final v = session?['status'];
+    return v is String && v.isNotEmpty ? v : null;
+  }
+
+  bool get inSession => session != null && (session?['status'] == 'active');
+
+  String? get sessionId {
+    final v = session?['session_id'];
+    return v is String && v.isNotEmpty ? v : null;
+  }
+
+  bool get inFormingRoom => sessionStatus == 'forming';
+
+  int? get roomFilled {
+    final v = session?['filled'];
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return null;
+  }
+
+  int? get roomNeeded {
+    final v = session?['needed'];
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return null;
+  }
+
+  int get targetTotal {
+    if (inFormingRoom) return 12;
+    final ids = session?['app_ids'];
+    if (ids is List) return ids.isNotEmpty ? ids.length - 1 : 12;
+    final assignedIds = assignedTargetIds;
+    if (assignedIds.isNotEmpty) return assignedIds.length;
+    return 12;
+  }
+
+  int? get roomTargetFilled {
+    if (!inFormingRoom) return null;
+    final filled = roomFilled;
+    if (filled != null) return filled > 0 ? filled - 1 : 0;
+    final ids = session?['app_ids'];
+    if (ids is List) return ids.isNotEmpty ? ids.length - 1 : 0;
+    return null;
+  }
+
+  int? get roomTargetNeeded {
+    final filled = roomTargetFilled;
+    if (filled == null) return null;
+    final needed = targetTotal - filled;
+    return needed < 0 ? 0 : needed;
+  }
+
+  int? get sessionEndMs {
+    final v = session?['end_time'];
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return null;
+  }
+
+  int? get nowMsFromServer {
+    final v = _payload?['now_ms'];
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return null;
+  }
+
+  Duration? get sessionRemaining {
+    final endMs = sessionEndMs;
+    final nowMs = nowMsFromServer;
+    if (endMs == null || nowMs == null) return null;
+    final diff = endMs - nowMs;
+    return diff <= 0 ? Duration.zero : Duration(milliseconds: diff);
+  }
+
+  int get testsRequired {
+    final v = _myApp?['tests_required'];
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return 0;
+  }
+
+  int get testsDone {
+    final v = _myApp?['tests_done'];
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return 0;
+  }
+
+  bool get testsComplete {
+    if (!inSession) return false;
+    final required = testsRequired;
+    if (required <= 0) return false;
+    return testsDone >= required;
+  }
+
+  Set<String> get completedTargetIds {
+    final out = <String>{};
+    final raw = _myApp?['completed_tests'];
+    if (raw is! List) return out;
+    for (final e in raw) {
+      if (e is Map) {
+        final id = e['target_app_id'];
+        if (id is String && id.isNotEmpty) out.add(id);
+      }
+    }
+    return out;
+  }
+
+  List<String> get assignedTargetIds {
+    final raw = _myApp?['assigned_tests'];
+    if (raw is List) return raw.whereType<String>().toList();
+    return const [];
+  }
+
+  Future<void> passGateAndSubmit({
+    required String appName,
+    required String storeLink,
+    required String sudoName,
+    required String phoneNum,
+    required String email,
+  }) async {
+    lastError = null;
+    buzzPending = false;
+    buzzMessage = null;
+
+    final uid = phoneNum.trim();
+    if (uid.isEmpty) return;
+
+    await _ensureApiBaseUrl();
+    if (apiBaseUrl.isEmpty) {
+      lastError = 'Backend not configured (missing api_base_url).';
+      scanLine = '> ERROR backend not configured';
+      scanRedMoment = true;
+      notifyListeners();
       return;
     }
 
-    final decoded = jsonDecode(resp.body);
-    if (decoded is! Map) return;
-    _applyRemoteUserPayload(decoded.cast<String, dynamic>());
-    await _saveIdentityOnly();
+    userId = uid;
+    _save();
+
+    scanning = true;
+    scanRedMoment = false;
+    scanLine = '> SUBMITTING…';
+    notifyListeners();
+
+    try {
+      final payload = await _postJson('/api/submit', {
+        'user_id': uid,
+        'app_name': appName.trim(),
+        'store_link': storeLink.trim(),
+      });
+      _applyPayload(payload);
+      route = Try12Route.terminalBoard;
+      _save();
+      _startTimers();
+    } catch (e) {
+      lastError = e.toString();
+      scanLine = '> ERROR submit failed';
+      scanRedMoment = true;
+    } finally {
+      scanning = false;
+      notifyListeners();
+    }
+  }
+
+  void _startTimers() {
+    _pollTimer?.cancel();
+    _heartbeatTimer?.cancel();
+
+    if (userId == null || apiBaseUrl.isEmpty) return;
+
+    _pollTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      refresh(silent: true);
+    });
+
+    _heartbeatTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+      pulse(silent: true);
+    });
+  }
+
+  void _stopTimers() {
+    _pollTimer?.cancel();
+    _pollTimer = null;
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
+  }
+
+  Future<void> onAppResumed() async {
+    await _ensureApiBaseUrl();
+    await pulse(silent: true);
+    await refresh(silent: true);
+  }
+
+  Future<void> refresh({bool silent = false}) async {
+    final uid = userId;
+    if (uid == null || apiBaseUrl.isEmpty) return;
+
+    if (!silent) {
+      loading = true;
+      notifyListeners();
+    }
+    try {
+      final payload = await _getJson('/api/user/${Uri.encodeComponent(uid)}');
+      _applyPayload(payload);
+      if (silent) notifyListeners();
+    } catch (e) {
+      lastError = e.toString();
+      if (silent) notifyListeners();
+    } finally {
+      if (!silent) {
+        loading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> pulse({bool silent = false}) async {
+    final uid = userId;
+    if (uid == null || apiBaseUrl.isEmpty) return;
+    try {
+      final payload = await _postJson('/api/heartbeat', {'user_id': uid});
+      _applyPayload(payload);
+      notifyListeners();
+    } catch (e) {
+      lastError = e.toString();
+      notifyListeners();
+    }
+  }
+
+  Future<void> completeTest(String targetAppId) async {
+    final uid = userId;
+    if (uid == null || apiBaseUrl.isEmpty) return;
+    loading = true;
+    lastError = null;
+    notifyListeners();
+
+    try {
+      final payload = await _postJson('/api/test', {
+        'user_id': uid,
+        'target_app_id': targetAppId,
+      });
+      _applyPayload(payload);
+    } catch (e) {
+      lastError = e.toString();
+    } finally {
+      loading = false;
+      notifyListeners();
+    }
+  }
+
+  void openAppDetail(String appId) {
+    selectedAppId = appId;
+    route = Try12Route.appDetail;
+    _save();
     notifyListeners();
   }
 
-  Future<void> _fetchRemoteUserState(String userId) async {
-    final uri = Uri.parse('$apiBaseUrl/api/user/$userId');
-    final resp = await http.get(uri);
-    if (resp.statusCode != 200) return;
-    final decoded = jsonDecode(resp.body);
-    if (decoded is! Map) return;
-    _applyRemoteUserPayload(decoded.cast<String, dynamic>());
-    await _saveIdentityOnly();
+  void openControlRoom() {
+    route = Try12Route.controlRoom;
+    _save();
     notifyListeners();
   }
 
-  Future<void> _removeRemoteApp(String appId) async {
-    final uri = Uri.parse('$apiBaseUrl/api/admin/apps/$appId');
-    await http.delete(uri, headers: {'X-Admin-Token': _adminToken});
+  void openCerebrum() {
+    route = Try12Route.cerebrum;
+    _save();
+    notifyListeners();
   }
 
-  void _applyRemoteUserPayload(Map<String, dynamic> payload) {
-    final deniedFlag = payload['denied'];
-    if (deniedFlag == true) {
-      denied = true;
-      route = Try12Route.denied;
-      return;
-    }
-
-    final u = payload['user_id'];
-    if (u is String) userId = u;
-    final appId = payload['my_app_id'];
-    myAppId = appId is String ? appId : null;
-
-    final pos = payload['my_queue_position'];
-    _remoteMyQueuePosition = pos is int ? pos : null;
-
-    final appsRaw = payload['apps_by_id'];
-    if (appsRaw is Map) {
-      appsById
-        ..clear()
-        ..addAll(
-          appsRaw.cast<String, dynamic>().map(
-                (k, v) => MapEntry(
-                  k,
-                  Test12AppMeta.fromJson((v as Map).cast<String, dynamic>()),
-                ),
-              ),
-        );
-    }
-
-    final sessRaw = payload['session'];
-    if (sessRaw is Map) {
-      session = Test12Session.fromJson(sessRaw.cast<String, dynamic>());
-    } else {
-      session = null;
-    }
-
-    route = hasSubmission ? Try12Route.queue : Try12Route.gate;
+  void backToTerminal() {
+    route = Try12Route.terminalBoard;
+    _save();
+    notifyListeners();
   }
 
-  bool _isLinkValid(String url) {
-    final uri = Uri.tryParse(url);
-    return uri != null &&
-        (uri.scheme == 'http' || uri.scheme == 'https') &&
-        uri.host.isNotEmpty;
+  MockApp get selectedApp {
+    final id = selectedAppId;
+    if (id != null) {
+      final found = getApp(id);
+      if (found != null) return found;
+    }
+    if (myAppCard != null) return myAppCard!;
+    return assigned.first;
   }
 
-  String _normalizeLink(String url) {
-    final trimmed = url.trim();
-    if (trimmed.isEmpty) return '';
-    final collapsed = trimmed.replaceAll(RegExp(r'\\s+'), '');
-    if (collapsed.startsWith(RegExp(r'https?://'))) {
-      return collapsed;
+  MockApp? getApp(String appId) {
+    if (myAppCard != null && myAppCard!.id == appId) return myAppCard;
+    for (final a in assigned) {
+      if (a.id == appId) return a;
     }
-    return 'https://$collapsed';
+    return null;
   }
+
+  bool get selectedIsMine {
+    final mine = myAppId;
+    final sel = selectedAppId;
+    return mine != null && sel != null && mine == sel;
+  }
+
+  bool isTargetDone(String appId) => completedTargetIds.contains(appId);
+
+  void resetLocal() {
+    _stopTimers();
+    userId = null;
+    _payload = null;
+    assigned.clear();
+    myAppCard = null;
+    selectedAppId = null;
+    lastError = null;
+    scanning = false;
+    buzzPending = false;
+    buzzMessage = null;
+    route = Try12Route.gateReadFirst;
+    _save();
+    notifyListeners();
+  }
+
+  void _applyPayload(Map<String, dynamic> payload) {
+    final wasComplete = _isCompleteFromPayload(_payload);
+    _payload = payload;
+    _rebuildAssigned();
+    _maybeBuzz();
+    _maybeSalute(wasComplete, _isCompleteFromPayload(_payload));
+  }
+
+  @visibleForTesting
+  void applyPayloadForTest(Map<String, dynamic> payload) {
+    _applyPayload(payload);
+    notifyListeners();
+  }
+
+  void _maybeBuzz() {
+    if (!inSession) return;
+
+    final sid = sessionId;
+    if (sid == null) return;
+    if (_lastBuzzedSessionId == sid) return;
+
+    _lastBuzzedSessionId = sid;
+    _save();
+
+    buzzPending = true;
+    buzzMessage = 'SESSION STARTED • 14 DAYS ACTIVE';
+  }
+
+  void clearBuzz() {
+    buzzPending = false;
+    buzzMessage = null;
+    notifyListeners();
+  }
+
+  void clearSalute() {
+    salutePending = false;
+    saluteMessage = null;
+    notifyListeners();
+  }
+
+  static bool _isCompleteFromPayload(Map<String, dynamic>? payload) {
+    if (payload == null) return false;
+    final sess = payload['session'];
+    if (sess is! Map) return false;
+    if (sess['status'] != 'active') return false;
+    final my = payload['my_app'];
+    if (my is! Map) return false;
+    final reqRaw = my['tests_required'];
+    final doneRaw = my['tests_done'];
+    final req = reqRaw is num ? reqRaw.toInt() : 0;
+    final done = doneRaw is num ? doneRaw.toInt() : 0;
+    return req > 0 && done >= req;
+  }
+
+  void _maybeSalute(bool wasComplete, bool isComplete) {
+    if (!inSession) return;
+    if (!isComplete) return;
+    if (wasComplete) return;
+
+    final sid = sessionId;
+    if (sid == null) return;
+    if (_lastSalutedSessionId == sid) return;
+
+    _lastSalutedSessionId = sid;
+    _save();
+
+    salutePending = true;
+    saluteMessage = 'WE SALUTE YOU • FAIR TESTER';
+  }
+
+  void _rebuildAssigned() {
+    assigned.clear();
+    myAppCard = null;
+
+    final myId = myAppId;
+    if (myId == null) return;
+
+    final appsByIdAny = _payload?['apps_by_id'];
+    final appsById = appsByIdAny is Map ? appsByIdAny.cast<String, dynamic>() : <String, dynamic>{};
+
+    final myMetaAny = appsById[myId];
+    final myMeta = myMetaAny is Map ? myMetaAny.cast<String, dynamic>() : const <String, dynamic>{};
+    final myName = (myMeta['app_name'] ?? _myApp?['app_name'] ?? myId).toString();
+    final myLink = (myMeta['store_link'] ?? _myApp?['store_link'] ?? '').toString();
+
+    final me = MockApp(
+      id: myId,
+      name: myName.toUpperCase(),
+      storeLink: myLink,
+      tagline: 'YOUR APP',
+      accent: Try12Colors.highlight,
+      icon: Icons.star,
+    );
+    me.installed = testsComplete;
+    me.opened = testsComplete;
+    myAppCard = me;
+
+    List<String> targetIds = assignedTargetIds;
+    if (targetIds.isEmpty) {
+      final sessionIdsAny = _payload?['session_app_ids'];
+      if (sessionIdsAny is List) {
+        targetIds = sessionIdsAny.whereType<String>().where((id) => id != myId).toList();
+      }
+    }
+
+    final done = completedTargetIds;
+
+    for (final id in targetIds) {
+      final metaAny = appsById[id];
+      final meta = metaAny is Map ? metaAny.cast<String, dynamic>() : const <String, dynamic>{};
+      final name = (meta['app_name'] ?? id).toString();
+      final link = (meta['store_link'] ?? '').toString();
+
+      final app = MockApp(
+        id: id,
+        name: name.toUpperCase(),
+        storeLink: link,
+        tagline: 'SESSION APP',
+        accent: _accentForId(id),
+        icon: _iconForId(id),
+      );
+      final isDone = done.contains(id);
+      app.installed = isDone;
+      app.opened = isDone;
+      assigned.add(app);
+    }
+  }
+
+  static const _palette = <Color>[
+    Color(0xFF6CE4BA),
+    Color(0xFFFEDB7E),
+    Color(0xFF7C9CFF),
+    Color(0xFFB48CFF),
+    Color(0xFF54D2FF),
+    Color(0xFFFFA24A),
+    Color(0xFFFF6BD6),
+    Color(0xFF6BFFB1),
+    Color(0xFFFFE27B),
+    Color(0xFF7BFFFD),
+    Color(0xFF9FB2C7),
+    Color(0xFF7EFF86),
+  ];
+
+  static const _icons = <IconData>[
+    Icons.public,
+    Icons.note,
+    Icons.favorite,
+    Icons.timelapse,
+    Icons.cloud,
+    Icons.email,
+    Icons.qr_code_scanner,
+    Icons.photo_camera,
+    Icons.book,
+    Icons.graphic_eq,
+    Icons.event,
+    Icons.account_balance_wallet,
+  ];
+
+  Color _accentForId(String id) {
+    final h = _stableHash(id);
+    return _palette[h % _palette.length];
+  }
+
+  IconData _iconForId(String id) {
+    final h = _stableHash(id);
+    return _icons[h % _icons.length];
+  }
+
+  static int _stableHash(String s) {
+    var h = 0;
+    for (final c in s.codeUnits) {
+      h = (h * 31 + c) & 0x7fffffff;
+    }
+    return h;
+  }
+
+  Future<Map<String, dynamic>> _getJson(String path) async {
+    final base = apiBaseUrl;
+    final url = Uri.parse('$base$path');
+    final r = await http.get(url, headers: const {'Cache-Control': 'no-store'}).timeout(const Duration(seconds: 8));
+    return _decodeJsonResponse(r);
+  }
+
+  Future<Map<String, dynamic>> _postJson(String path, Map<String, dynamic> body) async {
+    final base = apiBaseUrl;
+    final url = Uri.parse('$base$path');
+    final r = await http
+        .post(
+          url,
+          headers: const {'Content-Type': 'application/json'},
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 10));
+    return _decodeJsonResponse(r);
+  }
+}
+
+Map<String, dynamic> _decodeJsonResponse(http.Response r) {
+  final body = r.body;
+  Map<String, dynamic>? decoded;
+
+  if (body.isNotEmpty) {
+    try {
+      final any = jsonDecode(body);
+      if (any is Map<String, dynamic>) {
+        decoded = any;
+      } else if (any is Map) {
+        decoded = any.cast<String, dynamic>();
+      } else {
+        final preview = body.length > 160 ? '${body.substring(0, 160)}…' : body;
+        throw Exception('Unexpected response shape (preview: $preview)');
+      }
+    } on FormatException catch (e) {
+      final text = body.trim();
+      final preview = text.length > 160 ? '${text.substring(0, 160)}…' : text;
+      throw Exception('Non-JSON response (${e.message}). Preview: $preview');
+    }
+  }
+
+  if (r.statusCode < 200 || r.statusCode >= 300) {
+    if (decoded != null && decoded['note'] != null) {
+      throw Exception(decoded['note']);
+    }
+    throw Exception('HTTP ${r.statusCode}');
+  }
+
+  if (decoded == null) {
+    throw Exception('Empty response');
+  }
+
+  if (decoded['ok'] != true) {
+    throw Exception(decoded['note'] ?? 'Request failed');
+  }
+  return decoded;
 }

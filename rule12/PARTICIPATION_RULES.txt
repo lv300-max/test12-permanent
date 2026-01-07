@@ -1,10 +1,12 @@
 PARTICIPATION RULES
 
-- Testing is encouraged but never enforced
-- No required actions
-- No tracking of installs or reviews
-- Presence is sufficient
+Testing is required for eligibility.
+
+Rules:
+- Each session participant must test the 12 other apps in their session.
+- A user never tests their own app.
+- No tracking of installs or reviews; the system only records “test complete” events.
+- Users must pulse/heartbeat to remain eligible.
 
 System must not degrade if:
-- Users do nothing
-- Users test unevenly
+- Users delay participation (they remain ineligible until they comply)

@@ -6,15 +6,10 @@ Drop this folder in VS Code and run:
   flutter run
 
 App flow:
-- Gate (identity + basic verification)
-- Queue (chronological)
-- Session (12 apps, 14 days, auto-complete)
-- Assignment map (13 icons: your app + 12 slots)
-- Admin view (read-only + remove app, logs actions)
+- Gate (tap `START DEMO` or enter fields)
+- Terminal (live backend): shows your queue/session state
+- Session view: 13 apps total (yours + 12 others); tap each target, open store link, then `MARK TEST COMPLETE`
 
-Optional: connect to a shared server (site submits → app reads):
-
-- Start the server in `../server/` (see `../server/README.md`)
-- Run Flutter with:
-  - `--dart-define=TRY12_API_BASE_URL=http://localhost:8787`
-  - `--dart-define=TRY12_ADMIN_TOKEN=...` (optional; enables REMOVE in admin)
+Backend config:
+- Preferred: `--dart-define=TRY12_API_BASE_URL=https://YOUR-BACKEND`
+- Fallback: reads `api_base_url` from `https://test-12test.netlify.app/config.json`

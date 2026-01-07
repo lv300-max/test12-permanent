@@ -3,18 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TEST 12</title>
-    <meta name="description" content="Test 12 — controlled testing rotation system." />
-    <meta property="og:title" content="TEST 12" />
-    <meta property="og:description" content="Controlled testing rotation. 12 apps per session. 14 days." />
-    <meta property="og:image" content="/assets/hero.jpg" />
+    <title>TesT~12</title>
+    <meta name="application-name" content="TesT~12" />
+    <meta name="apple-mobile-web-app-title" content="TesT~12" />
+    <meta name="description" content="TesT~12 — controlled testing rotation system." />
+    <meta property="og:title" content="TesT~12" />
+    <meta property="og:description" content="Controlled testing rotation. Test 12 apps. 14 days." />
+    <meta property="og:image" content="assets/hero.jpg?v=test12-3" />
     <meta name="theme-color" content="#03060d" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="48x48" href="/assets/icons/favicon-48.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png" />
-    <link rel="preload" as="image" href="/assets/hero.jpg" />
-    <link rel="preload" as="video" href="/assets/webvid.mp4" type="video/mp4" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png?v=test12-3" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png?v=test12-3" />
+    <link rel="icon" type="image/png" sizes="48x48" href="assets/icons/favicon-48.png?v=test12-3" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=test12-3" />
+    <link rel="preload" as="image" href="assets/hero.jpg?v=test12-3" />
+    <link rel="preload" as="video" href="assets/webvid.mp4?v=test12-3" type="video/mp4" />
     <style>
       :root {
         --bg: #03060d;
@@ -37,12 +39,25 @@
         color: var(--text);
       }
       .wrap {
-        max-width: 720px;
+        max-width: 1060px;
         margin: 0 auto;
         padding: 48px 16px;
         min-height: 100%;
         display: grid;
-        place-items: center;
+        align-content: center;
+      }
+      .shell {
+        display: grid;
+        gap: 16px;
+        align-items: start;
+      }
+      @media (min-width: 900px) {
+        .shell {
+          grid-template-columns: 1fr 1.15fr;
+        }
+      }
+      .full {
+        grid-column: 1 / -1;
       }
       .card {
         background: linear-gradient(145deg, rgba(14, 36, 63, 0.6), rgba(9, 29, 55, 0.7));
@@ -51,6 +66,32 @@
         padding: 18px 18px;
         box-shadow: 0 0 24px rgba(0, 150, 255, 0.14);
         width: 100%;
+      }
+      ul {
+        margin: 10px 0 0 18px;
+        padding: 0;
+        color: var(--dim);
+        line-height: 1.55;
+        font-size: 13px;
+      }
+      li {
+        margin: 0 0 6px;
+      }
+      .video-frame {
+        width: 100%;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid rgba(31, 41, 55, 0.9);
+        background: rgba(3, 6, 13, 0.35);
+        aspect-ratio: 16 / 9;
+        max-height: min(52vh, 520px);
+      }
+      .video-frame video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: rgba(0, 0, 0, 0.55);
       }
       p {
         margin: 0;
@@ -160,6 +201,515 @@
         width: 16px;
         height: 16px;
       }
+      details {
+        border-radius: 14px;
+        border: 1px solid rgba(31, 41, 55, 0.9);
+        background: rgba(3, 6, 13, 0.28);
+        padding: 10px 12px;
+      }
+      details summary {
+        cursor: pointer;
+        user-select: none;
+        color: rgba(232, 234, 255, 0.92);
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        font-size: 12px;
+      }
+      details .micro {
+        margin-top: 10px;
+      }
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(31, 41, 55, 0.9);
+        background: rgba(3, 6, 13, 0.28);
+        color: rgba(232, 234, 255, 0.9);
+        font-size: 11px;
+      }
+      .tag .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(254, 219, 126, 0.9);
+        box-shadow: 0 0 14px rgba(254, 219, 126, 0.18);
+      }
+      .mini-grid {
+        display: grid;
+        gap: 10px;
+      }
+      @media (min-width: 900px) {
+        .mini-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .btn.secondary {
+        background: rgba(3, 6, 13, 0.35);
+        border-color: rgba(31, 41, 55, 0.9);
+        color: rgba(232, 234, 255, 0.9);
+      }
+      .btn.secondary:hover {
+        transform: translateY(-1px);
+      }
+      .divider {
+        height: 1px;
+        background: rgba(31, 41, 55, 0.75);
+        margin: 6px 0;
+      }
+      .warehouse {
+        border-radius: 14px;
+        border: 1px solid rgba(31, 41, 55, 0.9);
+        background: rgba(3, 6, 13, 0.28);
+        padding: 12px;
+        position: relative;
+        overflow: hidden;
+      }
+      .warehouse::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 20% 20%, rgba(108, 228, 186, 0.12), transparent 45%),
+          radial-gradient(circle at 80% 30%, rgba(254, 219, 126, 0.10), transparent 45%),
+          radial-gradient(circle at 60% 80%, rgba(124, 156, 255, 0.10), transparent 50%);
+        pointer-events: none;
+      }
+      .warehouse::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.0),
+          rgba(255, 255, 255, 0.02),
+          rgba(255, 255, 255, 0.0)
+        );
+        transform: translateY(-120%);
+        animation: scanline 2.8s linear infinite;
+        pointer-events: none;
+        opacity: 0.55;
+        mix-blend-mode: screen;
+      }
+      @keyframes scanline {
+        0% {
+          transform: translateY(-120%);
+        }
+        100% {
+          transform: translateY(120%);
+        }
+      }
+      .warehouse-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 8px;
+        position: relative;
+        z-index: 1;
+      }
+      .crate {
+        aspect-ratio: 1 / 1;
+        border-radius: 10px;
+        border: 1px solid rgba(31, 41, 55, 0.9);
+        background: linear-gradient(145deg, rgba(15, 20, 31, 0.85), rgba(3, 6, 13, 0.35));
+        position: relative;
+        overflow: hidden;
+        transform: translateZ(0);
+      }
+      .crate::after {
+        content: attr(data-label);
+        position: absolute;
+        left: 8px;
+        top: 8px;
+        font-size: 10px;
+        color: rgba(232, 234, 255, 0.85);
+        letter-spacing: 0.4px;
+        font-weight: 800;
+      }
+      .crate::before {
+        content: "";
+        position: absolute;
+        inset: -40% -40%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(108, 228, 186, 0.06),
+          rgba(254, 219, 126, 0.06),
+          transparent
+        );
+        transform: rotate(20deg);
+        animation: sweep 4.6s linear infinite;
+        opacity: 0.7;
+      }
+      @keyframes sweep {
+        0% {
+          transform: translateX(-40%) rotate(20deg);
+        }
+        100% {
+          transform: translateX(40%) rotate(20deg);
+        }
+      }
+      .crate .bar {
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        bottom: 10px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(20, 26, 37, 0.9);
+        border: 1px solid rgba(31, 41, 55, 0.8);
+        overflow: hidden;
+      }
+      .crate .bar > span {
+        display: block;
+        height: 100%;
+        width: var(--pct, 30%);
+        border-radius: 999px;
+        background: linear-gradient(
+          90deg,
+          rgba(108, 228, 186, 0.95),
+          rgba(124, 156, 255, 0.95),
+          rgba(254, 219, 126, 0.95)
+        );
+        background-size: 180% 100%;
+        animation: flow 1.6s ease-in-out infinite;
+        box-shadow: 0 0 16px rgba(108, 228, 186, 0.16);
+        transition: width 1400ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      @keyframes flow {
+        0% {
+          background-position: 0% 50%;
+          filter: brightness(1);
+        }
+        50% {
+          background-position: 100% 50%;
+          filter: brightness(1.05);
+        }
+        100% {
+          background-position: 0% 50%;
+          filter: brightness(1);
+        }
+      }
+      .crate .sig {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        border: 1px solid rgba(31, 41, 55, 0.85);
+        background: rgba(20, 26, 37, 0.85);
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+      }
+      .crate.active {
+        border-color: rgba(108, 228, 186, 0.35);
+        box-shadow: 0 0 0 1px rgba(108, 228, 186, 0.10), 0 0 28px rgba(108, 228, 186, 0.10);
+      }
+      .crate.active .sig {
+        background: rgba(108, 228, 186, 0.28);
+        border-color: rgba(108, 228, 186, 0.55);
+        box-shadow: 0 0 18px rgba(108, 228, 186, 0.18);
+        animation: blink 900ms ease-in-out infinite;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.85;
+        }
+        50% {
+          transform: scale(1.25);
+          opacity: 1;
+        }
+      }
+      .belt {
+        position: relative;
+        margin-top: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(20, 26, 37, 0.75);
+        border: 1px solid rgba(31, 41, 55, 0.8);
+        overflow: hidden;
+      }
+      .belt::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          90deg,
+          rgba(139, 148, 161, 0.0),
+          rgba(139, 148, 161, 0.0) 10px,
+          rgba(139, 148, 161, 0.22) 10px,
+          rgba(139, 148, 161, 0.22) 16px
+        );
+        animation: belt 1.4s linear infinite;
+        opacity: 0.6;
+      }
+      @keyframes belt {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-26px);
+        }
+      }
+      .belt .pkg {
+        position: absolute;
+        top: 50%;
+        width: 18px;
+        height: 10px;
+        border-radius: 4px;
+        transform: translate(-120px, -50%);
+        background: linear-gradient(145deg, rgba(232, 234, 255, 0.16), rgba(3, 6, 13, 0.10));
+        border: 1px solid rgba(31, 41, 55, 0.8);
+        box-shadow: 0 0 18px rgba(0, 150, 255, 0.10);
+        opacity: 0.75;
+        animation: pkgMove 3.2s linear infinite;
+      }
+      .belt .pkg:nth-child(1) {
+        animation-delay: 0ms;
+      }
+      .belt .pkg:nth-child(2) {
+        animation-delay: 800ms;
+        width: 14px;
+        opacity: 0.6;
+      }
+      .belt .pkg:nth-child(3) {
+        animation-delay: 1600ms;
+        width: 20px;
+        opacity: 0.7;
+      }
+      .belt .pkg:nth-child(4) {
+        animation-delay: 2400ms;
+        width: 12px;
+        opacity: 0.55;
+      }
+      @keyframes pkgMove {
+        0% {
+          transform: translate(-80px, -50%);
+        }
+        100% {
+          transform: translate(calc(100% + 80px), -50%);
+        }
+      }
+      .days {
+        margin-top: 10px;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .pip {
+        width: 20px;
+        height: 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(31, 41, 55, 0.85);
+        background: rgba(3, 6, 13, 0.22);
+        color: rgba(139, 148, 161, 0.9);
+        font-size: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      .pip.on {
+        color: rgba(232, 234, 255, 0.92);
+        border-color: rgba(254, 219, 126, 0.75);
+        background: rgba(254, 219, 126, 0.12);
+        box-shadow: 0 0 16px rgba(254, 219, 126, 0.12);
+      }
+      .pip.done {
+        color: rgba(108, 228, 186, 0.92);
+        border-color: rgba(108, 228, 186, 0.55);
+        background: rgba(108, 228, 186, 0.10);
+      }
+      .telemetry {
+        margin-top: 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(31, 41, 55, 0.85);
+        background: rgba(3, 6, 13, 0.22);
+        padding: 8px 10px;
+      }
+      .telemetry svg {
+        width: 100%;
+        height: 44px;
+        display: block;
+      }
+      .telemetry .grid {
+        stroke: rgba(31, 41, 55, 0.6);
+        stroke-width: 1;
+      }
+      .telemetry .line {
+        stroke: rgba(108, 228, 186, 0.9);
+        stroke-width: 2;
+        fill: none;
+        filter: drop-shadow(0 0 10px rgba(108, 228, 186, 0.18));
+      }
+      .telemetry .line2 {
+        stroke: rgba(254, 219, 126, 0.85);
+        stroke-width: 2;
+        fill: none;
+        opacity: 0.7;
+        filter: drop-shadow(0 0 10px rgba(254, 219, 126, 0.12));
+      }
+      .feed {
+        margin-top: 10px;
+        font-size: 11px;
+        color: rgba(139, 148, 161, 0.95);
+        line-height: 1.5;
+        position: relative;
+        z-index: 1;
+      }
+      .feed strong {
+        color: rgba(232, 234, 255, 0.92);
+      }
+      .locked {
+        opacity: 0.72;
+        filter: saturate(0.85);
+      }
+      .pro-grid {
+        display: grid;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      @media (min-width: 900px) {
+        .pro-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .btn.locked-btn {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+      .btn.mini {
+        padding: 10px 12px;
+        font-size: 12px;
+        letter-spacing: 0.2px;
+      }
+      .price-row {
+        display: grid;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      @media (min-width: 900px) {
+        .price-row {
+          grid-template-columns: 1fr 1fr 1fr 1fr;
+        }
+      }
+      .price-card {
+        border-radius: 14px;
+        border: 1px solid rgba(31, 41, 55, 0.9);
+        background: rgba(3, 6, 13, 0.25);
+        padding: 10px 12px;
+      }
+      .price-card .tier {
+        font-size: 11px;
+        letter-spacing: 0.8px;
+        color: rgba(232, 234, 255, 0.88);
+        font-weight: 900;
+      }
+      .price-card .price {
+        margin-top: 6px;
+        font-size: 16px;
+        color: rgba(232, 234, 255, 0.96);
+        font-weight: 900;
+      }
+      .price-card .meta {
+        margin-top: 6px;
+        font-size: 10px;
+        color: rgba(139, 148, 161, 0.92);
+        line-height: 1.35;
+      }
+      .inline {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .tiny {
+        font-size: 10px;
+        color: rgba(139, 148, 161, 0.92);
+        line-height: 1.35;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.66);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        z-index: 999;
+      }
+      .modal.on {
+        display: flex;
+      }
+      .modal-card {
+        width: min(980px, 100%);
+        max-height: min(84vh, 720px);
+        overflow: auto;
+        border-radius: 16px;
+        border: 1px solid rgba(31, 41, 55, 0.9);
+        background: linear-gradient(145deg, rgba(14, 36, 63, 0.92), rgba(9, 29, 55, 0.94));
+        box-shadow: 0 0 44px rgba(0, 150, 255, 0.22);
+        padding: 14px;
+      }
+      .window-row {
+        display: grid;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      @media (min-width: 900px) {
+        .window-row {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .window {
+        border-radius: 14px;
+        border: 1px solid rgba(31, 41, 55, 0.9);
+        background: rgba(3, 6, 13, 0.22);
+        padding: 12px;
+      }
+      .window .head {
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+        justify-content: space-between;
+      }
+      .window .head .t {
+        font-size: 11px;
+        letter-spacing: 0.8px;
+        font-weight: 900;
+        color: rgba(232, 234, 255, 0.92);
+      }
+      .window .head .s {
+        font-size: 10px;
+        color: rgba(139, 148, 161, 0.92);
+      }
+      .window .bar {
+        margin-top: 10px;
+        height: 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(31, 41, 55, 0.8);
+        background: rgba(20, 26, 37, 0.75);
+        overflow: hidden;
+      }
+      .window .bar > span {
+        display: block;
+        height: 100%;
+        width: var(--pct, 35%);
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(108, 228, 186, 0.9), rgba(254, 219, 126, 0.9));
+        box-shadow: 0 0 16px rgba(108, 228, 186, 0.16);
+      }
+      .fade-locked {
+        opacity: 0.6;
+        filter: saturate(0.85);
+      }
       .chip {
         display: inline-block;
         padding: 2px 8px;
@@ -177,91 +727,244 @@
   </head>
   <body>
     <main class="wrap">
-      <div class="card" id="gate">
-        <iframe name="netlifyTarget" hidden></iframe>
-        <form
-          id="netlifyForm"
-          name="test12-gate"
-          method="POST"
-          data-netlify="true"
-          netlify-honeypot="bot-field"
-          target="netlifyTarget"
-          hidden
-        >
-          <input type="hidden" name="form-name" value="test12-gate" />
-          <input name="bot-field" />
-          <input type="email" name="gmail" />
-          <input type="text" name="app_name" />
-          <input type="url" name="store_link" />
-        </form>
+      <div class="shell">
+        <div class="card" id="gate">
+          <div class="status-row" aria-hidden="true">
+            <div id="joinOk" class="status-box"></div>
+            <div id="downloadOk" class="status-box"></div>
+          </div>
 
-        <div class="status-row" aria-hidden="true">
-          <div id="gmailOk" class="status-box"></div>
-          <div id="joinedOk" class="status-box"></div>
+          <div class="stack">
+            <p class="confirm-primary">Gate 1</p>
+            <p>Two clicks:</p>
+            <div class="confirm-secondary">
+              <div>1) Join Google Group (required)</div>
+              <div>2) Open Google Play (opt-in + download)</div>
+            </div>
+            <a id="joinGroupBtn" class="btn" target="_blank" rel="noopener">1) JOIN GOOGLE GROUP</a>
+            <button id="downloadBtn" class="btn" type="button" disabled>2) OPEN GOOGLE PLAY</button>
+            <a id="moneyHopperBtn" class="btn secondary locked-btn" target="_blank" rel="noopener" aria-disabled="true">3) MONEY HOPPER</a>
+            <div class="micro">Money Hopper unlocks after you download TesT~12.</div>
+            <label class="check">
+              <input id="joinedCheck" type="checkbox" />
+              I joined the Google Group
+            </label>
+            <div class="micro">
+              If the group page says you don’t have access, switch to the Google account you use in Google Play.
+            </div>
+            <div class="micro">Group: <span class="chip">test-12v1@googlegroups.com</span></div>
+            <details>
+              <summary>Can’t join?</summary>
+              <div class="micro">
+                - Make sure you’re signed into the right Google account (same one you use in Google Play).<br />
+                - If it opens inside an in‑app browser, try opening the link in Chrome.<br />
+                - If it still says “no access”, you’re not on the allowed members list yet.
+              </div>
+            </details>
+            <div class="micro"><a href="/privacy">Privacy</a></div>
+          </div>
         </div>
-        <form id="gateForm" class="stack" autocomplete="on">
-          <div>
-            <label class="label" for="gmail">Google account (Gmail)</label>
-            <input
-              id="gmail"
-              class="field"
-              name="gmail"
-              type="email"
-              inputmode="email"
-              autocomplete="email"
-              autocapitalize="off"
-              spellcheck="false"
-              required
-            />
-            <p class="helper">Use the account you install apps with.</p>
-          </div>
-          <button class="btn" type="submit">Save email</button>
-        </form>
 
-        <div id="gateConfirm" class="stack" hidden>
-          <p class="confirm-primary">3 steps.</p>
-          <div class="confirm-secondary">
-            <div>1) Join group: <span class="chip">test-12v1@googlegroups.com</span></div>
-            <div>2) Opt in on Google Play</div>
-            <div>3) Download</div>
+        <div class="card" aria-label="Preview video">
+          <div class="video-frame">
+            <video poster="assets/hero.jpg?v=test12-3" preload="metadata" playsinline webkit-playsinline muted autoplay loop controls>
+              <source src="assets/webvid.mp4?v=test12-3" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
           </div>
-          <a id="joinGroupBtn" class="btn" target="_blank" rel="noopener">1) OPEN GOOGLE GROUP (TAP JOIN)</a>
-          <label class="check">
-            <input id="joined" type="checkbox" />
-            I joined the group (then unlocks download)
-          </label>
-          <button id="optInBtn" class="btn" type="button" disabled>2) OPEN OPT-IN LINK</button>
-          <button id="storeBtn" class="btn" type="button" disabled>3) OPEN PLAY STORE DOWNLOAD</button>
-          <div class="micro"><a href="/privacy">Privacy</a></div>
+          <div class="micro">Watch the video, then tap Join + Download.</div>
+        </div>
+
+        <div class="card full" aria-label="How it works">
+          <p class="confirm-primary">What this does</p>
+          <p>One session. Twelve apps. One 14‑day verification window. Clean, technical, inevitable.</p>
+          <ul>
+            <li>Join the group, opt in, install.</li>
+            <li>You receive <strong>12 assigned apps</strong> for this session.</li>
+            <li>Install + open each assigned app at least once (that’s the signal).</li>
+            <li>Stay installed for the full <strong>14 days</strong> (window remains active).</li>
+            <li>Quick check-ins keep the terminal green.</li>
+            <li>No reviews required. No noise. Just verification.</li>
+          </ul>
+          <div class="micro">Tip: Set a daily ping. Two minutes a day beats willpower.</div>
+        </div>
+
+        <div class="card full" aria-label="Make it automatic">
+          <p class="confirm-primary">Make it automatic</p>
+          <p>Put the cycle on autopilot: a daily ping + a one-line plan.</p>
+          <div class="mini-grid" style="margin-top: 12px">
+            <div>
+              <span class="label">Daily reminder time</span>
+              <input id="reminderTime" class="field" type="time" />
+              <div class="helper">Optional, but it increases follow‑through.</div>
+            </div>
+            <div>
+              <span class="label">Implementation plan (optional)</span>
+              <input id="planInput" class="field" placeholder='After "coffee", I open 2 apps.' maxlength="80" />
+              <div class="helper">Turn “later” into “when”.</div>
+            </div>
+          </div>
+          <div class="mini-grid" style="margin-top: 12px">
+            <button id="calendarBtn" class="btn secondary" type="button">ADD 14‑DAY CALENDAR REMINDER</button>
+            <label class="check" style="margin: 0">
+              <input id="pledgeCheck" type="checkbox" />
+              I’ll do 2 minutes/day for 14 days
+            </label>
+          </div>
+          <div class="micro" id="calendarStatus"></div>
+          <div class="tags">
+            <span class="tag"><span class="dot"></span> Coming soon: subscriptions</span>
+            <span class="tag"><span class="dot"></span> Coming soon: multi‑session rotations</span>
+          </div>
+        </div>
+
+        <div class="card full" aria-label="Operations feed">
+          <p class="confirm-primary">Operations</p>
+          <p>Busywork, but organized. Boxes move when you do.</p>
+          <div class="warehouse" style="margin-top: 12px">
+            <div class="warehouse-grid" id="warehouseGrid">
+              <div class="crate" data-label="A01"><span class="sig"></span><div class="bar"><span style="--pct: 18%"></span></div></div>
+              <div class="crate" data-label="A02"><span class="sig"></span><div class="bar"><span style="--pct: 34%"></span></div></div>
+              <div class="crate" data-label="A03"><span class="sig"></span><div class="bar"><span style="--pct: 52%"></span></div></div>
+              <div class="crate" data-label="A04"><span class="sig"></span><div class="bar"><span style="--pct: 28%"></span></div></div>
+              <div class="crate" data-label="A05"><span class="sig"></span><div class="bar"><span style="--pct: 40%"></span></div></div>
+              <div class="crate" data-label="A06"><span class="sig"></span><div class="bar"><span style="--pct: 22%"></span></div></div>
+              <div class="crate" data-label="A07"><span class="sig"></span><div class="bar"><span style="--pct: 46%"></span></div></div>
+              <div class="crate" data-label="A08"><span class="sig"></span><div class="bar"><span style="--pct: 30%"></span></div></div>
+              <div class="crate" data-label="A09"><span class="sig"></span><div class="bar"><span style="--pct: 58%"></span></div></div>
+              <div class="crate" data-label="A10"><span class="sig"></span><div class="bar"><span style="--pct: 26%"></span></div></div>
+              <div class="crate" data-label="A11"><span class="sig"></span><div class="bar"><span style="--pct: 44%"></span></div></div>
+              <div class="crate" data-label="A12"><span class="sig"></span><div class="bar"><span style="--pct: 36%"></span></div></div>
+            </div>
+            <div class="belt" aria-hidden="true">
+              <span class="pkg"></span>
+              <span class="pkg"></span>
+              <span class="pkg"></span>
+              <span class="pkg"></span>
+            </div>
+            <div class="days" id="dayPips" aria-label="14-day fast-forward"></div>
+            <div class="telemetry" aria-label="Telemetry">
+              <svg viewBox="0 0 320 44" preserveAspectRatio="none">
+                <path class="grid" d="M0 11 H320 M0 22 H320 M0 33 H320"></path>
+                <path id="teleLine" class="line" d=""></path>
+                <path id="teleLine2" class="line2" d=""></path>
+              </svg>
+            </div>
+            <div class="feed" id="opsFeed">
+              <div><strong>SCAN</strong> cycle integrity…</div>
+              <div><strong>QUEUE</strong> packages staged…</div>
+              <div><strong>VERIFY</strong> installs recorded…</div>
+            </div>
+          </div>
+
+	          <details class="locked" style="margin-top: 12px">
+	            <summary>Pro bay (coming soon)</summary>
+	            <div class="micro">
+	              When you’re ready to scale: run <strong>multiple sessions simultaneously</strong>, with bigger bundles and essentially unlimited throughput.
+	              More apps + more concurrent sessions = higher tier.
+	            </div>
+	            <div class="divider"></div>
+	            <div class="micro">
+	              <strong>Tester early access:</strong> preview the Pro console + unlock extra apps beyond your assigned set.
+	              (Offline preview — nothing is charged here.)
+	            </div>
+	            <div class="inline" style="margin-top: 10px">
+	              <input id="proCode" class="field" placeholder="TESTER CODE" maxlength="24" style="flex: 1; min-width: 220px" />
+	              <button id="proUnlockBtn" class="btn secondary mini" type="button" style="width: auto">UNLOCK</button>
+	              <button id="proPreviewBtn" class="btn secondary mini" type="button" style="width: auto">OPEN PRO PREVIEW</button>
+	            </div>
+	            <div class="tiny" id="proStatus" style="margin-top: 8px"></div>
+	            <div class="micro"><span class="chip">Pricing preview (not live yet)</span> Subject to change.</div>
+
+            <div class="price-row" aria-label="Pro pricing preview">
+              <div class="price-card">
+                <div class="tier">PRO • BUNDLE 5</div>
+                <div class="price">$4.99/mo</div>
+                <div class="meta">5 apps per session • 1 active session • best for small runs</div>
+              </div>
+              <div class="price-card">
+                <div class="tier">PRO • BUNDLE 10</div>
+                <div class="price">$8.99/mo</div>
+                <div class="meta">10 apps per session • up to 3 active sessions • steady parallel throughput</div>
+              </div>
+              <div class="price-card">
+                <div class="tier">PRO • BUNDLE 15</div>
+                <div class="price">$12.99/mo</div>
+                <div class="meta">15 apps per session • up to 6 active sessions • rotation at scale</div>
+              </div>
+              <div class="price-card">
+                <div class="tier">PRO • UNLIMITED</div>
+                <div class="price">$24.99/mo</div>
+                <div class="meta">Unlimited sessions running simultaneously • priority tooling • fair‑use limits</div>
+              </div>
+            </div>
+
+            <div class="pro-grid" style="margin-top: 12px">
+              <a class="btn mini locked-btn" aria-disabled="true">UNLOCK PRO (COMING SOON)</a>
+              <a class="btn mini locked-btn" aria-disabled="true">BILLING DASHBOARD (COMING SOON)</a>
+              <a class="btn mini locked-btn" aria-disabled="true">MULTI‑SESSION ROTATIONS</a>
+              <a class="btn mini locked-btn" aria-disabled="true">EXPORT / AUDIT LOGS</a>
+            </div>
+          </details>
+
+          <details class="locked" style="margin-top: 12px">
+            <summary>Support development</summary>
+            <div class="micro">
+              If you want to keep this going (faster releases, better tooling), you’ll be able to support the project here.
+            </div>
+            <a id="donateBtn" class="btn secondary mini locked-btn" aria-disabled="true">DONATE (COMING SOON)</a>
+          </details>
         </div>
       </div>
     </main>
 
+    <div id="proModal" class="modal" aria-hidden="true">
+      <div class="modal-card" role="dialog" aria-label="Pro preview">
+        <div class="inline">
+          <p class="confirm-primary" style="font-size: 16px">Pro preview</p>
+          <span class="chip">tester</span>
+          <span style="flex: 1"></span>
+          <button id="proModalClose" class="btn secondary mini" type="button" style="width: auto">CLOSE</button>
+        </div>
+        <div id="proModalBody" style="margin-top: 10px"></div>
+      </div>
+    </div>
+
     <script>
-      const STORAGE_KEY = "test12_gmail";
-      const JOINED_KEY = "test12_joined_group_v1";
-      const RECORDED_KEY = "test12_recorded_v1";
+      const JOIN_CLICKED_KEY = "test12_join_clicked_v1";
+      const DOWNLOAD_CLICKED_KEY = "test12_download_clicked_v1";
+      const MONEY_HOPPER_UNLOCKED_KEY = "test12_money_hopper_unlocked_v1";
+      const JOIN_CONFIRMED_KEY = "test12_join_confirmed_v1";
+      const PLEDGE_KEY = "test12_pledge_2min_v1";
+      const REMINDER_TIME_KEY = "test12_reminder_time_v1";
+      const PLAN_KEY = "test12_plan_v1";
+      const DONATE_URL = "";
+      const PRO_EARLY_KEY = "test12_pro_early_access_v1";
+      const PRO_PREVIEW_VIEWS_KEY = "test12_pro_preview_views_left_v1";
 
       const GROUP_URL = "https://groups.google.com/g/test-12v1";
-      const OPTIN_URL = "https://play.google.com/apps/testing/com.test12.app";
-      const STORE_URL = "https://play.google.com/store/apps/details?id=com.test12.app";
+      const DOWNLOAD_URL = "https://play.google.com/apps/testing/com.test12.app";
+      const MONEY_HOPPER_URL = "";
 
-      const form = document.getElementById("gateForm");
-      const input = document.getElementById("gmail");
-      const confirm = document.getElementById("gateConfirm");
       const gate = document.getElementById("gate");
-      const gmailOk = document.getElementById("gmailOk");
-      const joinedOk = document.getElementById("joinedOk");
-      const joined = document.getElementById("joined");
+      const joinOk = document.getElementById("joinOk");
+      const downloadOk = document.getElementById("downloadOk");
       const joinGroupBtn = document.getElementById("joinGroupBtn");
-      const optInBtn = document.getElementById("optInBtn");
-      const storeBtn = document.getElementById("storeBtn");
-      const netlifyForm = document.getElementById("netlifyForm");
-      const netlifyGmail = netlifyForm?.elements?.namedItem?.("gmail") || null;
-      const netlifyAppName = netlifyForm?.elements?.namedItem?.("app_name") || null;
-      const netlifyStoreLink = netlifyForm?.elements?.namedItem?.("store_link") || null;
-
-      let locked = false;
+      const downloadBtn = document.getElementById("downloadBtn");
+      const moneyHopperBtn = document.getElementById("moneyHopperBtn");
+      const joinedCheck = document.getElementById("joinedCheck");
+      const pledgeCheck = document.getElementById("pledgeCheck");
+      const reminderTime = document.getElementById("reminderTime");
+      const planInput = document.getElementById("planInput");
+      const calendarBtn = document.getElementById("calendarBtn");
+      const calendarStatus = document.getElementById("calendarStatus");
+      const proCode = document.getElementById("proCode");
+      const proUnlockBtn = document.getElementById("proUnlockBtn");
+      const proPreviewBtn = document.getElementById("proPreviewBtn");
+      const proStatus = document.getElementById("proStatus");
+      const proModal = document.getElementById("proModal");
+      const proModalClose = document.getElementById("proModalClose");
+      const proModalBody = document.getElementById("proModalBody");
 
       function setSafe(key, value) {
         try {
@@ -287,14 +990,6 @@
         return window[`__${key}`] ?? null;
       }
 
-      function isGmailAddress(value) {
-        const v = String(value || "").trim();
-        if (!v) return false;
-        if (!input.checkValidity()) return false;
-        const lower = v.toLowerCase();
-        return lower.endsWith("@gmail.com") || lower.endsWith("@googlemail.com");
-      }
-
       function setOn(el, on) {
         if (!el) return;
         if (on) el.classList.add("on");
@@ -302,93 +997,399 @@
       }
 
       function updateIndicators() {
-        setOn(gmailOk, isGmailAddress(input.value));
-        setOn(joinedOk, Boolean(joined?.checked));
-        const canDownload = Boolean(joined?.checked) && isGmailAddress(input.value);
-        if (optInBtn) optInBtn.disabled = !canDownload;
-        if (storeBtn) storeBtn.disabled = !canDownload;
-      }
+        const joined = getSafe(JOIN_CLICKED_KEY) === "1" || getSafe(JOIN_CONFIRMED_KEY) === "1";
+        const downloaded = getSafe(DOWNLOAD_CLICKED_KEY) === "1";
+        setOn(joinOk, joined);
+        setOn(downloadOk, downloaded);
+        if (downloadBtn) downloadBtn.disabled = !joined;
+        if (gate) gate.classList.toggle("recorded", downloaded);
 
-      function sendSubmission(gmail, name, link) {
-        if (netlifyForm && netlifyGmail && netlifyAppName && netlifyStoreLink) {
-          netlifyGmail.value = gmail;
-          netlifyAppName.value = name;
-          netlifyStoreLink.value = link;
-          try {
-            netlifyForm.submit();
-            return;
-          } catch {}
+        const hopperUnlocked = getSafe(MONEY_HOPPER_UNLOCKED_KEY) === "1" || downloaded;
+        if (moneyHopperBtn) {
+          const canUse = hopperUnlocked && Boolean(MONEY_HOPPER_URL);
+          moneyHopperBtn.classList.toggle("locked-btn", !canUse);
+          moneyHopperBtn.setAttribute("aria-disabled", canUse ? "false" : "true");
+          if (canUse) moneyHopperBtn.setAttribute("href", MONEY_HOPPER_URL);
+          else moneyHopperBtn.removeAttribute("href");
         }
-
-        const payload = new URLSearchParams();
-        payload.set("form-name", "test12-gate");
-        payload.set("gmail", gmail);
-        payload.set("app_name", name);
-        payload.set("store_link", link);
-        fetch("/", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: payload.toString()
-        }).catch(() => {});
       }
-
-      function showConfirm() {
-        form.setAttribute("hidden", "");
-        confirm.removeAttribute("hidden");
-        gate.classList.add("recorded");
-        locked = true;
-      }
-
-      form.addEventListener("submit", (e) => {
-        if (locked) return;
-        if (!form.checkValidity()) {
-          return;
-        }
-        e.preventDefault();
-
-        const gmail = String(input.value || "").trim();
-        if (!isGmailAddress(gmail)) return;
-        setSafe(STORAGE_KEY, gmail);
-
-        const joinedValue = Boolean(joined?.checked);
-        setSafe(JOINED_KEY, joinedValue ? "1" : "0");
-        sendSubmission(gmail, "tester", "onboarding");
-        setSafe(RECORDED_KEY, "1");
-        showConfirm();
-      });
-
-      input.addEventListener("input", updateIndicators);
-      joined?.addEventListener("change", () => {
-        setSafe(JOINED_KEY, joined.checked ? "1" : "0");
-        updateIndicators();
-      });
 
       joinGroupBtn?.setAttribute("href", GROUP_URL);
-
-      optInBtn?.addEventListener("click", () => {
-        if (optInBtn.disabled) return;
-        window.open(OPTIN_URL, "_blank", "noopener");
-      });
-      storeBtn?.addEventListener("click", () => {
-        if (storeBtn.disabled) return;
-        window.open(STORE_URL, "_blank", "noopener");
-      });
-
-      (function init() {
-        const recorded = getSafe(RECORDED_KEY) === "1";
-        const savedGmail = getSafe(STORAGE_KEY);
-        const savedJoined = getSafe(JOINED_KEY) === "1";
-
-        if (typeof savedGmail === "string") input.value = savedGmail;
-        if (joined) joined.checked = savedJoined;
+      joinGroupBtn?.addEventListener("click", () => {
+        setSafe(JOIN_CLICKED_KEY, "1");
+        setSafe(JOIN_CONFIRMED_KEY, "1");
+        if (joinedCheck) joinedCheck.checked = true;
         updateIndicators();
+      });
 
-        if (recorded) {
-          showConfirm();
-          return;
+      joinedCheck?.addEventListener("change", () => {
+        setSafe(JOIN_CONFIRMED_KEY, joinedCheck.checked ? "1" : "0");
+        updateIndicators();
+      });
+
+      downloadBtn?.addEventListener("click", () => {
+        if (downloadBtn.disabled) return;
+        setSafe(DOWNLOAD_CLICKED_KEY, "1");
+        setSafe(MONEY_HOPPER_UNLOCKED_KEY, "1");
+        updateIndicators();
+        window.open(DOWNLOAD_URL, "_blank", "noopener");
+      });
+
+      function formatTimeLabel(value) {
+        if (!value || typeof value !== "string" || !value.includes(":")) return "";
+        return value;
+      }
+
+      function buildDailyIcs({ startDate, days, timeValue, title, description }) {
+        const [hh, mm] = timeValue.split(":").map((x) => parseInt(x, 10));
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+
+        function pad(n) {
+          return String(n).padStart(2, "0");
+        }
+        function ymd(d) {
+          return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
         }
 
-        if (isGmailAddress(input.value)) updateIndicators();
+        const now = new Date();
+        const dtStamp = `${ymd(now)}T${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+        const lines = [
+          "BEGIN:VCALENDAR",
+          "VERSION:2.0",
+          "PRODID:-//TEST12//Reminder//EN",
+        ];
+
+        for (let i = 0; i < days; i++) {
+          const d = new Date(startDate);
+          d.setDate(d.getDate() + i);
+          d.setHours(hh, mm, 0, 0);
+
+          const dtStart = `${ymd(d)}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+          const uid = `test12-${ymd(d)}-${pad(hh)}${pad(mm)}@local`;
+
+          lines.push(
+            "BEGIN:VEVENT",
+            `UID:${uid}`,
+            `DTSTAMP:${dtStamp}Z`,
+            `DTSTART;TZID=${tz}:${dtStart}`,
+            `DURATION:PT5M`,
+            `SUMMARY:${title}`,
+            `DESCRIPTION:${description}`,
+            "END:VEVENT",
+          );
+        }
+
+        lines.push("END:VCALENDAR");
+        return lines.join("\r\n");
+      }
+
+      function downloadTextFile(filename, text, mime) {
+        const blob = new Blob([text], { type: mime || "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 500);
+      }
+
+      calendarBtn?.addEventListener("click", () => {
+        const t = reminderTime?.value || "19:00";
+        const safeT = formatTimeLabel(t);
+        if (!safeT) {
+          if (calendarStatus) calendarStatus.textContent = "Pick a reminder time first.";
+          return;
+        }
+        const ics = buildDailyIcs({
+          startDate: new Date(),
+          days: 14,
+          timeValue: safeT,
+          title: "TesT~12 — daily check‑in",
+          description: "Open the app, do a quick check‑in, and open 1–2 assigned apps.",
+        });
+        downloadTextFile(`TEST12-14day-reminder-${safeT.replace(":", "")}.ics`, ics, "text/calendar");
+        if (calendarStatus) calendarStatus.textContent = `Calendar file downloaded for ${safeT} daily (14 days).`;
+      });
+
+      pledgeCheck?.addEventListener("change", () => {
+        setSafe(PLEDGE_KEY, pledgeCheck.checked ? "1" : "0");
+      });
+
+      reminderTime?.addEventListener("change", () => {
+        setSafe(REMINDER_TIME_KEY, reminderTime.value || "");
+      });
+
+      planInput?.addEventListener("input", () => {
+        setSafe(PLAN_KEY, planInput.value || "");
+      });
+
+      (function initOps() {
+        const lines = [
+          ["SCAN", "cycle integrity…"],
+          ["QUEUE", "packages staged…"],
+          ["VERIFY", "installs recorded…"],
+          ["INDEX", "assigned apps…"],
+          ["ROUTE", "tester traffic…"],
+          ["ARCHIVE", "completion receipts…"],
+          ["CACHE", "artifacts warmed…"],
+          ["PATCH", "module deltas applied…"],
+        ];
+
+        const crates = Array.from(document.querySelectorAll(".crate"));
+        const bars = crates.map((c) => c.querySelector(".bar > span")).filter(Boolean);
+        const feed = document.getElementById("opsFeed");
+        const dayPips = document.getElementById("dayPips");
+        const teleLine = document.getElementById("teleLine");
+        const teleLine2 = document.getElementById("teleLine2");
+        let tick = 0;
+        let lastTargetAt = 0;
+        let lastFeedAt = 0;
+        let day = 1;
+        let dayDir = 1;
+
+        const current = bars.map(() => 24 + Math.random() * 40);
+        const target = bars.map(() => 24 + Math.random() * 40);
+
+        function setBarPct(i, v) {
+          const el = bars[i];
+          if (!el) return;
+          el.style.setProperty("--pct", `${Math.max(8, Math.min(96, v)).toFixed(1)}%`);
+        }
+
+        function updateFeed() {
+          if (!feed) return;
+          const a = lines[tick % lines.length];
+          const b = lines[(tick + 1) % lines.length];
+          const c = lines[(tick + 2) % lines.length];
+          feed.innerHTML = `
+            <div><strong>${a[0]}</strong> ${a[1]}</div>
+            <div><strong>${b[0]}</strong> ${b[1]}</div>
+            <div><strong>${c[0]}</strong> ${c[1]}</div>
+          `;
+        }
+
+        function buildDayPips() {
+          if (!dayPips) return;
+          const pips = [];
+          for (let i = 1; i <= 14; i++) {
+            const cls = i < day ? "pip done" : i === day ? "pip on" : "pip";
+            pips.push(`<span class="${cls}">${i}</span>`);
+          }
+          dayPips.innerHTML = pips.join("");
+        }
+
+        function nextDay() {
+          // Fast-forward feel: run 1→14 then drift back slightly and forward again.
+          if (day >= 14) dayDir = -1;
+          if (day <= 10) dayDir = 1;
+          day = Math.max(1, Math.min(14, day + dayDir));
+        }
+
+        function setCrateActives() {
+          // Highlight a handful as "currently processing".
+          const activeCount = 3 + Math.floor(Math.random() * 3);
+          const chosen = new Set();
+          while (chosen.size < activeCount) chosen.add(Math.floor(Math.random() * crates.length));
+          crates.forEach((c, i) => c.classList.toggle("active", chosen.has(i)));
+        }
+
+        function makeLinePath(seed, amp) {
+          // Lightweight sparkline generator.
+          const w = 320;
+          const h = 44;
+          const padX = 6;
+          const padY = 6;
+          const points = 28;
+          let d = "";
+          for (let i = 0; i < points; i++) {
+            const x = padX + (i / (points - 1)) * (w - padX * 2);
+            const n = Math.sin((i + seed) * 0.62) + Math.sin((i + seed) * 0.17) * 0.7;
+            const y = padY + (h - padY * 2) * (0.55 - (n * amp) / 2);
+            d += i === 0 ? `M${x.toFixed(1)} ${y.toFixed(1)}` : ` L${x.toFixed(1)} ${y.toFixed(1)}`;
+          }
+          return d;
+        }
+
+        function updateTelemetry() {
+          if (teleLine) teleLine.setAttribute("d", makeLinePath(tick * 1.0, 0.55));
+          if (teleLine2) teleLine2.setAttribute("d", makeLinePath(tick * 1.7 + 4, 0.35));
+        }
+
+        if (DONATE_URL) {
+          const d = document.getElementById("donateBtn");
+          if (d) {
+            d.classList.remove("locked-btn");
+            d.setAttribute("href", DONATE_URL);
+            d.removeAttribute("aria-disabled");
+            d.textContent = "DONATE";
+          }
+        }
+
+        function retarget() {
+          for (let i = 0; i < target.length; i++) {
+            const base = 18 + Math.random() * 62;
+            // bias towards "working hard" as days progress
+            const bias = (day / 14) * 10;
+            target[i] = Math.min(96, base + bias);
+          }
+          setCrateActives();
+          updateTelemetry();
+        }
+
+        function frame(ts) {
+          if (!lastTargetAt) lastTargetAt = ts;
+          if (!lastFeedAt) lastFeedAt = ts;
+
+          // Smoothly approach targets (flowy, not jumpy).
+          const dt = Math.min(0.05, (ts - lastTargetAt) / 1000);
+          for (let i = 0; i < current.length; i++) {
+            current[i] = current[i] + (target[i] - current[i]) * (0.85 * dt * 2.0);
+            setBarPct(i, current[i]);
+          }
+
+          // Retarget every ~2.2s for motion without blinking.
+          if (ts - lastTargetAt > 2200) {
+            tick++;
+            nextDay();
+            buildDayPips();
+            retarget();
+            lastTargetAt = ts;
+          }
+
+          // Update feed more frequently for "busy" vibe.
+          if (ts - lastFeedAt > 1200) {
+            updateFeed();
+            lastFeedAt = ts;
+          }
+
+          requestAnimationFrame(frame);
+        }
+
+        buildDayPips();
+        retarget();
+        updateFeed();
+        requestAnimationFrame(frame);
+      })();
+
+      (function initPro() {
+        function getBool(key) {
+          return getSafe(key) === "1";
+        }
+        function setBool(key, v) {
+          setSafe(key, v ? "1" : "0");
+        }
+        function getViewsLeft() {
+          const raw = getSafe(PRO_PREVIEW_VIEWS_KEY);
+          const n = raw == null ? 2 : parseInt(String(raw), 10);
+          if (!Number.isFinite(n)) return 2;
+          return Math.max(0, Math.min(99, n));
+        }
+        function setViewsLeft(n) {
+          setSafe(PRO_PREVIEW_VIEWS_KEY, String(Math.max(0, Math.min(99, n))));
+        }
+        function isCodeValid(code) {
+          const v = String(code || "")
+            .trim()
+            .toUpperCase();
+          return v === "T12-PRO" || v === "EARLY12";
+        }
+        function renderStatus() {
+          const early = getBool(PRO_EARLY_KEY);
+          const left = getViewsLeft();
+          if (!proStatus) return;
+          proStatus.innerHTML = early
+            ? '<span class="chip">EARLY ACCESS</span> enabled • extra apps unlocked • unlimited preview'
+            : `<span class="chip">PREVIEW</span> views left: <strong>${left}</strong> • enter tester code for early access`;
+        }
+
+        function openModal() {
+          if (!proModal) return;
+          proModal.classList.add("on");
+          proModal.setAttribute("aria-hidden", "false");
+        }
+        function closeModal() {
+          if (!proModal) return;
+          proModal.classList.remove("on");
+          proModal.setAttribute("aria-hidden", "true");
+        }
+
+        function renderModal() {
+          if (!proModalBody) return;
+          const early = getBool(PRO_EARLY_KEY);
+          proModalBody.innerHTML = `
+            <div class="tiny">This is a preview console. ${early ? "Early access is enabled." : "Preview mode is limited."}</div>
+            <div class="window-row">
+              <div class="window">
+                <div class="head"><div class="t">SESSION A</div><div class="s">12 tests • 14 days</div></div>
+                <div class="bar"><span style="--pct: 46%"></span></div>
+                <div class="tiny" style="margin-top: 8px">Assigned window. Stable throughput.</div>
+              </div>
+              <div class="window ${early ? "" : "fade-locked"}">
+                <div class="head"><div class="t">SESSION B</div><div class="s">${early ? "12 tests • 14 days" : "LOCKED (PRO)"}</div></div>
+                <div class="bar"><span style="--pct: ${early ? "38%" : "0%"}"></span></div>
+                <div class="tiny" style="margin-top: 8px">${early ? "Parallel window. More apps. More output." : "Unlock early access to simulate parallel sessions."}</div>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="micro"><strong>Extra apps (early access)</strong></div>
+            <div class="tiny">${early ? "Additional modules beyond the assigned set are unlocked." : "Locked. Enter tester code to unlock additional modules."}</div>
+            <div class="warehouse" style="margin-top: 10px">
+              <div class="warehouse-grid">
+                ${["P01","P02","P03","P04","P05","P06"].map((id) => `
+                  <div class="crate ${early ? "" : "fade-locked"}" data-label="${id}">
+                    <div class="bar"><span style="--pct: ${early ? (18 + Math.floor(Math.random()*60)) + "%" : "0%"}"></span></div>
+                  </div>
+                `).join("")}
+              </div>
+              <div class="belt" aria-hidden="true"></div>
+            </div>
+          `;
+        }
+
+        proUnlockBtn?.addEventListener("click", () => {
+          const code = proCode?.value || "";
+          if (!isCodeValid(code)) {
+            if (proStatus) proStatus.textContent = "Invalid code.";
+            return;
+          }
+          setBool(PRO_EARLY_KEY, true);
+          renderStatus();
+        });
+
+        proPreviewBtn?.addEventListener("click", () => {
+          const early = getBool(PRO_EARLY_KEY);
+          const left = getViewsLeft();
+          if (!early && left <= 0) {
+            if (proStatus) proStatus.textContent = "Preview used up. Enter tester code for early access.";
+            return;
+          }
+          if (!early) setViewsLeft(left - 1);
+          renderStatus();
+          renderModal();
+          openModal();
+        });
+
+        proModalClose?.addEventListener("click", closeModal);
+        proModal?.addEventListener("click", (e) => {
+          if (e.target === proModal) closeModal();
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") closeModal();
+        });
+
+        if (getSafe(PRO_PREVIEW_VIEWS_KEY) == null) setViewsLeft(2);
+        renderStatus();
+      })();
+
+      (function init() {
+        if (joinedCheck) joinedCheck.checked = getSafe(JOIN_CONFIRMED_KEY) === "1";
+        if (pledgeCheck) pledgeCheck.checked = getSafe(PLEDGE_KEY) === "1";
+        if (reminderTime) reminderTime.value = getSafe(REMINDER_TIME_KEY) || "19:00";
+        if (planInput) planInput.value = getSafe(PLAN_KEY) || "";
+        updateIndicators();
       })();
     </script>
   </body>

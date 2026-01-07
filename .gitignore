@@ -1,4 +1,6 @@
 .DS_Store
+.idea/
+.vscode/
 
 # Archives / exports
 *.zip
@@ -18,6 +20,8 @@ server/.public_*.log
 server/.server_pid
 server/.tunnel_pid
 server/.caffeinate*
+server/.local_server.log
+server/.local_server_pid
 server/data/*.json
 server/bin/
 

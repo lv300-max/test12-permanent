@@ -6,7 +6,7 @@ Fields:
 - app_id
 - user_id
 - entered_at
-- status (waiting | promoted | removed)
+- status (waiting | in_session | removed)
 
 Rules:
 - Apps enter queue after verification
@@ -16,5 +16,5 @@ Rules:
 - No prioritization unless explicitly added later
 
 Promotion:
-- When a session opens, take next 12 apps in queue
+- When a session opens, take next 13 apps in queue
 - Mark them promoted

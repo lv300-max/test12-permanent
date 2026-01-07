@@ -13,12 +13,12 @@ CORE RULES:
 1. One verified user = one free app at a time
 2. No binaries are ever uploaded
 3. Apps are represented ONLY by metadata + store links
-4. Exactly 12 apps per active session
+4. Exactly 13 apps per active session
 5. Each session lasts exactly 14 days
 6. Sessions do not overlap internally
 7. Users may wait in queue indefinitely
-8. Participation is optional, not enforced
-9. System must function even if users do nothing
+8. Participation is required to remain eligible
+9. System must function even if users delay participation
 10. Admin intervenes only on abuse
 
 ---

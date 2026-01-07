@@ -1,6 +1,6 @@
 ## Deploy (simple)
 
-This server is the shared “real-time” state for the queue + 12-app sessions.
+This server is the shared “real-time” state for the queue + 13-app sessions.
 
 ### Run locally
 
@@ -27,6 +27,10 @@ Run (persists state on your machine):
 docker run -p 8787:8787 -e TEST12_ADMIN_TOKEN=change-me -v "$PWD/data:/app/data" test12-server
 ```
 
+Optional env knobs:
+- `TEST12_HEARTBEAT_TTL_MS` (default 900000)
+- `TEST12_MAX_FAILED_SESSIONS` (default 3)
+
 ### Point the Flutter app at the server
 
 Build/run with:
@@ -40,4 +44,3 @@ Optional:
 ```bash
 --dart-define=TRY12_AUTO_SUBMIT_REMOTE=true
 ```
-

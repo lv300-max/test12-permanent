@@ -7,7 +7,7 @@ Session fields:
 - status (active | complete)
 
 Rules:
-- Session always contains exactly 12 apps
+- Session always contains exactly 13 apps
 - Session duration is exactly 14 days
 - Session auto-completes at end_time
 - Completed apps exit system cleanly

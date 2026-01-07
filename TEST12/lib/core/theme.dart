@@ -42,6 +42,20 @@ class Try12Gradients {
       Color(0xFFFEDB7E),
     ],
   );
+
+  static LinearGradient sheen(double t, {double intensity = 0.06}) {
+    final x = -1.2 + (t.clamp(0.0, 1.0) * 2.4);
+    return LinearGradient(
+      begin: Alignment(x, -1.0),
+      end: Alignment(x + 1.2, 1.0),
+      colors: [
+        Colors.transparent,
+        Colors.white.withValues(alpha: intensity),
+        Colors.transparent,
+      ],
+      stops: const [0.0, 0.5, 1.0],
+    );
+  }
 }
 
 final try12Theme = ThemeData(

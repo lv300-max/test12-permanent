@@ -18,5 +18,5 @@ To make it permanent (stable URL 24/7), deploy the backend to Render using the i
 
 ## Notes
 
-- The backend is the shared queue/session “real-time” state (everyone sees the same session once 12 are queued).
+- The backend is the shared queue/session “real-time” state (everyone sees the same session once 13 are queued).
 - The app reads `https://test-12test.netlify.app/config.json` automatically if you don’t hardcode a backend URL at build time.
