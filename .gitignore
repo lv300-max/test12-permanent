@@ -7,6 +7,10 @@
 *.tar.gz
 *.sha256
 
+# Android build artifacts
+*.aab
+*.apk
+
 # Generated/duplicate site bundles in this workspace
 NETLIFY_DEPLOY_TEST12/
 test12-netlify-upload-clean/
