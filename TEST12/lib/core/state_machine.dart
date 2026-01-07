@@ -343,6 +343,7 @@ class Try12Machine extends ChangeNotifier {
     required String sudoName,
     required String phoneNum,
     required String email,
+    String? bundleId,
   }) async {
     lastError = null;
     buzzPending = false;
@@ -369,11 +370,15 @@ class Try12Machine extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final payload = await _postJson('/api/submit', {
+      final body = <String, dynamic>{
         'user_id': uid,
         'app_name': appName.trim(),
         'store_link': storeLink.trim(),
-      });
+      };
+      final bundle = bundleId?.trim() ?? '';
+      if (bundle.isNotEmpty) body['bundle_id'] = bundle;
+
+      final payload = await _postJson('/api/submit', body);
       _applyPayload(payload);
       route = Try12Route.terminalBoard;
       _save();

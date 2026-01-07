@@ -20,6 +20,7 @@ class _GateReadFirstState extends State<GateReadFirst> {
   final sudoNameCtrl = TextEditingController();
   final phoneNumCtrl = TextEditingController();
   final emailCtrl = TextEditingController(); // New email field
+  final bundleIdCtrl = TextEditingController();
 
   @override
   void dispose() {
@@ -28,6 +29,7 @@ class _GateReadFirstState extends State<GateReadFirst> {
     sudoNameCtrl.dispose();
     phoneNumCtrl.dispose();
     emailCtrl.dispose();
+    bundleIdCtrl.dispose();
     super.dispose();
   }
 
@@ -100,6 +102,8 @@ class _GateReadFirstState extends State<GateReadFirst> {
                               _InputBox(label: 'PHONE NUMBER', controller: phoneNumCtrl, isNumeric: true),
                               const SizedBox(height: 8),
                               _InputBox(label: 'EMAIL', controller: emailCtrl, isEmail: true),
+                              const SizedBox(height: 8),
+                              _InputBox(label: 'BUNDLE ID (OPTIONAL)', controller: bundleIdCtrl),
 
                               const SizedBox(height: 24),
 
@@ -111,6 +115,7 @@ class _GateReadFirstState extends State<GateReadFirst> {
                                   final sudoName = sudoNameCtrl.text;
                                   final phoneNum = phoneNumCtrl.text;
                                   final email = emailCtrl.text;
+                                  final bundleId = bundleIdCtrl.text;
                                   if (appName.isNotEmpty && appAddr.isNotEmpty && sudoName.isNotEmpty && phoneNum.isNotEmpty && email.isNotEmpty) {
                                     widget.m.passGateAndSubmit(
                                       appName: appName,
@@ -118,6 +123,7 @@ class _GateReadFirstState extends State<GateReadFirst> {
                                       sudoName: sudoName,
                                       phoneNum: phoneNum,
                                       email: email,
+                                      bundleId: bundleId,
                                     );
                                   }
                                 },

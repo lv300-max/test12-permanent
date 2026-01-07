@@ -9,7 +9,7 @@ const STATE_PATH = process.env.TEST12_STATE_PATH || "./data/state.json";
 const ADMIN_TOKEN = process.env.TEST12_ADMIN_TOKEN || "";
 const HEARTBEAT_TTL_MS = Number(process.env.TEST12_HEARTBEAT_TTL_MS || 15 * 60 * 1000); // 15 minutes
 const MAX_FAILED_SESSIONS = Number(process.env.TEST12_MAX_FAILED_SESSIONS || 3);
-const PRODEV_SIZES = new Set([3, 5]);
+const PRODEV_SIZES = new Set([3, 5, 7, 10]);
 
 const app = express();
 app.use(cors());

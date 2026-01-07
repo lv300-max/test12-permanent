@@ -8,7 +8,7 @@ This is a minimal HTTP API that persists **queue + session** state in a JSON fil
 - Sessions auto-complete at `end_time`; completed apps exit cleanly.
 - Apps are **metadata + store link only**.
 - Participation required: each session participant completes **12 tests** (the other apps in their 13‑app session). Heartbeats keep entries eligible; stale entries are skipped.
-- ProDev bundles (3 or 5 drops): admin can create paid “drops” that auto-queue sequentially.
+- ProDev bundles (3/5/7/10 drops): admin can create paid “drops” that auto-queue sequentially.
 
 ## Run
 
@@ -92,7 +92,7 @@ Header: `X-Admin-Token: <TEST12_ADMIN_TOKEN>`
 
 - `GET /api/admin/state`
 - `DELETE /api/admin/apps/:appId` (logs the action; does **not** remove apps currently in an active session)
-- `POST /api/prodev/bundle` — create bundle drops (size 3 or 5) for a user; automatically queues the first drop
+- `POST /api/prodev/bundle` — create bundle drops (size 3/5/7/10) for a user; automatically queues the first drop
 
 ## Flutter app config
 

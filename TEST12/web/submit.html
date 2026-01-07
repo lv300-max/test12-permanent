@@ -142,8 +142,8 @@
 
         <form id="f" class="stack" autocomplete="on">
           <div>
-            <label class="label" for="userId">User ID (any text)</label>
-            <input id="userId" class="field" type="text" required />
+            <label class="label" for="userId">Phone number</label>
+            <input id="userId" class="field" type="tel" inputmode="tel" required />
           </div>
           <div>
             <label class="label" for="appName">App name</label>
@@ -154,17 +154,20 @@
             <input id="storeLink" class="field" type="url" inputmode="url" required />
           </div>
           <div>
-            <label class="label" for="bundleId">ProDev bundle id (optional)</label>
+            <label class="label" for="bundleId">Bundle ID (package code) (optional)</label>
             <input id="bundleId" class="field" type="text" inputmode="text" placeholder="PB0001" />
           </div>
           <button id="submitBtn" class="btn" type="submit">SUBMIT</button>
           <div class="muted" id="msg"></div>
           <div class="muted" style="display: grid; gap: 6px;">
             <div>Participation is required: you test 12 apps during your session (heartbeat keeps you eligible).</div>
-            <div class="chip" aria-label="ProDev pricing">
-              <span>ProDev</span>
-              <span>3 drops: $29</span>
-              <span>5 drops: $49</span>
+            <div>If you purchased a package, paste your bundle ID above.</div>
+            <div class="chip" aria-label="Packages" style="flex-wrap: wrap; row-gap: 6px;">
+              <span>Packages</span>
+              <span>3 apps: $29</span>
+              <span>5 apps: $49</span>
+              <span>7 apps: contact</span>
+              <span>10 apps: contact</span>
             </div>
           </div>
           <div class="muted"><a href="/">Back</a> • <a href="/privacy">Privacy</a></div>
