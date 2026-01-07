@@ -22,7 +22,7 @@ Server listens on `PORT` (default `8787`).
 State persists to `TEST12_STATE_PATH` (default `./data/state.json`).
 
 Config knobs (env):
-- `TEST12_HEARTBEAT_TTL_MS` (default: 15m) — if no heartbeat since this window, waiting entry is marked stale/ineligible.
+- `TEST12_HEARTBEAT_TTL_MS` (default: 24h) — if no heartbeat since this window, waiting entry is marked stale/ineligible.
 - `TEST12_MAX_FAILED_SESSIONS` (default: 3) — deny new submissions after this many failed sessions.
 
 ## API

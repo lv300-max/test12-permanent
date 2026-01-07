@@ -28,7 +28,7 @@ docker run -p 8787:8787 -e TEST12_ADMIN_TOKEN=change-me -v "$PWD/data:/app/data"
 ```
 
 Optional env knobs:
-- `TEST12_HEARTBEAT_TTL_MS` (default 900000)
+- `TEST12_HEARTBEAT_TTL_MS` (default 86400000)
 - `TEST12_MAX_FAILED_SESSIONS` (default 3)
 
 ### Point the Flutter app at the server
