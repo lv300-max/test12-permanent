@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../core/background.dart';
 import '../core/state_machine.dart';
 import '../core/theme.dart';
@@ -21,6 +22,84 @@ class _GateReadFirstState extends State<GateReadFirst> {
   final phoneNumCtrl = TextEditingController();
   final emailCtrl = TextEditingController(); // New email field
   final bundleIdCtrl = TextEditingController();
+  final GoogleSignIn _google = GoogleSignIn();
+  bool _authBusy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreGoogle();
+  }
+
+  Future<void> _restoreGoogle() async {
+    try {
+      final account = await _google.signInSilently();
+      if (!mounted) return;
+      if (account == null) return;
+      widget.m.setGoogleIdentity(id: account.id, email: account.email, displayName: account.displayName);
+      if (emailCtrl.text.trim().isEmpty) emailCtrl.text = account.email;
+    } catch (_) {
+      // Ignore — user can still submit with phone number.
+    }
+  }
+
+  Future<void> _signInGoogle() async {
+    if (_authBusy) return;
+    setState(() => _authBusy = true);
+    try {
+      final account = await _google.signIn();
+      if (!mounted) return;
+      if (account == null) return;
+      widget.m.setGoogleIdentity(id: account.id, email: account.email, displayName: account.displayName);
+      emailCtrl.text = account.email;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('GOOGLE CONNECTED', style: TextStyle(fontFamily: 'RobotoMono')),
+          duration: Duration(milliseconds: 900),
+          backgroundColor: Try12Colors.board,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Google sign-in failed: $e', style: const TextStyle(fontFamily: 'RobotoMono')),
+          duration: const Duration(milliseconds: 1600),
+          backgroundColor: Try12Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _authBusy = false);
+    }
+  }
+
+  Future<void> _signOutGoogle() async {
+    if (_authBusy) return;
+    setState(() => _authBusy = true);
+    try {
+      await _google.signOut();
+      if (!mounted) return;
+      widget.m.clearGoogleIdentity();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('GOOGLE SIGNED OUT', style: TextStyle(fontFamily: 'RobotoMono')),
+          duration: Duration(milliseconds: 900),
+          backgroundColor: Try12Colors.board,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Google sign-out failed: $e', style: const TextStyle(fontFamily: 'RobotoMono')),
+          duration: const Duration(milliseconds: 1600),
+          backgroundColor: Try12Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _authBusy = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -38,6 +117,10 @@ class _GateReadFirstState extends State<GateReadFirst> {
     if (widget.m.scanning) {
       return _ScanPanelPage(m: widget.m);
     }
+
+    final googleOn = widget.m.hasGoogleIdentity;
+    final phoneLabel = googleOn ? 'PHONE NUMBER (OPTIONAL)' : 'PHONE NUMBER';
+    final emailLabel = googleOn ? 'EMAIL (AUTO-FILLED)' : 'EMAIL';
 
     // Using LayoutBuilder + SingleChildScrollView to prevent overflow
     return Stack(
@@ -85,9 +168,54 @@ class _GateReadFirstState extends State<GateReadFirst> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               const SizedBox(height: 40),
+                              GestureDetector(
+                                onTap: _authBusy ? null : (googleOn ? _signOutGoogle : _signInGoogle),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Try12Colors.panel,
+                                    border: Border.all(color: googleOn ? Try12Colors.green : Try12Colors.border),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              googleOn ? 'GOOGLE CONNECTED' : 'SIGN IN WITH GOOGLE (RECOMMENDED)',
+                                              style: const TextStyle(fontFamily: 'RobotoMono', fontSize: 11, color: Try12Colors.text, letterSpacing: 0.6),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              googleOn ? (widget.m.googleEmail ?? '(no email)') : 'Locks your slot to your Google account.',
+                                              style: const TextStyle(fontFamily: 'RobotoMono', fontSize: 10, color: Try12Colors.dim, height: 1.25),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      if (_authBusy)
+                                        const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        )
+                                      else
+                                        Text(
+                                          googleOn ? 'SIGN OUT' : 'SIGN IN',
+                                          style: const TextStyle(fontFamily: 'RobotoMono', fontSize: 11, color: Try12Colors.highlight, letterSpacing: 0.6),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
                               // Warning Text
                               const Text(
-                                'One phone number. One active app.\nMultiple submissions reduce visibility.',
+                                'One account = one active app.\nMultiple submissions reduce visibility.',
                                 style: TextStyle(fontFamily: 'monospace', fontSize: 10, color: Try12Colors.amber, height: 1.4),
                               ),
                               const SizedBox(height: 12),
@@ -99,9 +227,9 @@ class _GateReadFirstState extends State<GateReadFirst> {
                               const SizedBox(height: 8),
                               _InputBox(label: 'SENDER NAME', controller: sudoNameCtrl),
                               const SizedBox(height: 8),
-                              _InputBox(label: 'PHONE NUMBER', controller: phoneNumCtrl, isNumeric: true),
+                              _InputBox(label: phoneLabel, controller: phoneNumCtrl, isNumeric: true),
                               const SizedBox(height: 8),
-                              _InputBox(label: 'EMAIL', controller: emailCtrl, isEmail: true),
+                              _InputBox(label: emailLabel, controller: emailCtrl, isEmail: true),
                               const SizedBox(height: 8),
                               _InputBox(label: 'BUNDLE ID (OPTIONAL)', controller: bundleIdCtrl),
 
@@ -116,14 +244,22 @@ class _GateReadFirstState extends State<GateReadFirst> {
                                   final phoneNum = phoneNumCtrl.text;
                                   final email = emailCtrl.text;
                                   final bundleId = bundleIdCtrl.text;
-                                  if (appName.isNotEmpty && appAddr.isNotEmpty && sudoName.isNotEmpty && phoneNum.isNotEmpty && email.isNotEmpty) {
+                                  final googleKey = widget.m.googleUserId;
+                                  final effectiveEmail = email.trim().isNotEmpty ? email.trim() : (widget.m.googleEmail ?? '');
+                                  final hasIdentity = (googleKey?.trim().isNotEmpty == true) || phoneNum.trim().isNotEmpty;
+                                  if (appName.trim().isNotEmpty &&
+                                      appAddr.trim().isNotEmpty &&
+                                      sudoName.trim().isNotEmpty &&
+                                      hasIdentity &&
+                                      effectiveEmail.trim().isNotEmpty) {
                                     widget.m.passGateAndSubmit(
                                       appName: appName,
                                       storeLink: appAddr,
                                       sudoName: sudoName,
                                       phoneNum: phoneNum,
-                                      email: email,
+                                      email: effectiveEmail,
                                       bundleId: bundleId,
+                                      userKey: googleKey,
                                     );
                                   }
                                 },

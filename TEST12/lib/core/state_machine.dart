@@ -21,6 +21,11 @@ class Try12Machine extends ChangeNotifier {
   // Identity (server key)
   String? userId;
 
+  // Optional Google identity (preferred user key + display)
+  String? googleUserId;
+  String? googleEmail;
+  String? googleDisplayName;
+
   // Remote snapshot (raw JSON payload from backend)
   Map<String, dynamic>? _payload;
 
@@ -66,6 +71,9 @@ class Try12Machine extends ChangeNotifier {
     apiBaseUrl = prefs.getString('apiBaseUrl') ?? '';
     _manualApiBaseUrl = prefs.getString('manualApiBaseUrl');
     userId = prefs.getString('userId');
+    googleUserId = prefs.getString('googleUserId');
+    googleEmail = prefs.getString('googleEmail');
+    googleDisplayName = prefs.getString('googleDisplayName');
     _lastBuzzedSessionId = prefs.getString('lastBuzzedSessionId');
     _lastSalutedSessionId = prefs.getString('lastSalutedSessionId');
 
@@ -73,7 +81,7 @@ class Try12Machine extends ChangeNotifier {
 
     if (userId != null && apiBaseUrl.isNotEmpty) {
       await refresh(silent: true);
-      _startTimers();
+      if (myAppId != null) _startTimers();
     }
 
     notifyListeners();
@@ -93,6 +101,22 @@ class Try12Machine extends ChangeNotifier {
       p.setString('userId', userId!);
     } else {
       p.remove('userId');
+    }
+
+    if (googleUserId != null && googleUserId!.trim().isNotEmpty) {
+      p.setString('googleUserId', googleUserId!.trim());
+    } else {
+      p.remove('googleUserId');
+    }
+    if (googleEmail != null && googleEmail!.trim().isNotEmpty) {
+      p.setString('googleEmail', googleEmail!.trim());
+    } else {
+      p.remove('googleEmail');
+    }
+    if (googleDisplayName != null && googleDisplayName!.trim().isNotEmpty) {
+      p.setString('googleDisplayName', googleDisplayName!.trim());
+    } else {
+      p.remove('googleDisplayName');
     }
 
     if (_lastBuzzedSessionId != null) {
@@ -152,6 +176,35 @@ class Try12Machine extends ChangeNotifier {
     _save();
     notifyListeners();
     await refresh(silent: true);
+    notifyListeners();
+  }
+
+  bool get hasGoogleIdentity => googleUserId != null && googleUserId!.trim().isNotEmpty;
+
+  String? get userLabel {
+    final uid = userId;
+    if (uid == null || uid.trim().isEmpty) return null;
+    if (googleUserId != null && googleEmail != null && uid == googleUserId) return googleEmail;
+    return uid;
+  }
+
+  void setGoogleIdentity({
+    required String id,
+    required String email,
+    String? displayName,
+  }) {
+    googleUserId = id.trim().isEmpty ? null : id.trim();
+    googleEmail = email.trim().isEmpty ? null : email.trim();
+    googleDisplayName = displayName?.trim().isEmpty == true ? null : displayName?.trim();
+    _save();
+    notifyListeners();
+  }
+
+  void clearGoogleIdentity() {
+    googleUserId = null;
+    googleEmail = null;
+    googleDisplayName = null;
+    _save();
     notifyListeners();
   }
 
@@ -344,12 +397,13 @@ class Try12Machine extends ChangeNotifier {
     required String phoneNum,
     required String email,
     String? bundleId,
+    String? userKey,
   }) async {
     lastError = null;
     buzzPending = false;
     buzzMessage = null;
 
-    final uid = phoneNum.trim();
+    final uid = (userKey?.trim().isNotEmpty == true) ? userKey!.trim() : phoneNum.trim();
     if (uid.isEmpty) return;
 
     await _ensureApiBaseUrl();
@@ -532,6 +586,9 @@ class Try12Machine extends ChangeNotifier {
   void resetLocal() {
     _stopTimers();
     userId = null;
+    googleUserId = null;
+    googleEmail = null;
+    googleDisplayName = null;
     _payload = null;
     assigned.clear();
     myAppCard = null;

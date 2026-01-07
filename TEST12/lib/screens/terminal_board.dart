@@ -270,7 +270,7 @@ class _TerminalBoardScreenState extends State<TerminalBoardScreen> with SingleTi
                     borderRadius: BorderRadius.circular(14),
                     child: _StatusCard(
                       apiBaseUrl: m.apiBaseUrl,
-                      userId: m.userId,
+                      userId: m.userLabel,
                       statusText: statusText,
                       secondaryText: secondaryText,
                       remaining: remaining,
