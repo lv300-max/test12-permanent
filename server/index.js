@@ -66,6 +66,29 @@ app.post("/api/submit", (req, res) => {
     });
     created = true;
     changed = true;
+  } else {
+    // Allow an existing waiting entry to update its metadata (typos/edits) without changing queue order.
+    const meta = state.apps_by_id[existingAppId];
+    const q = findQueueEntry(state, existingAppId);
+    const inActiveSession = isAppInAnyActiveSession(state, existingAppId);
+
+    // Only allow edits while still waiting (before being placed into a live active session).
+    if (meta && q && q.status === "waiting" && !inActiveSession) {
+      if (meta.app_name !== appName) {
+        meta.app_name = appName;
+        changed = true;
+      }
+      if (meta.store_link !== storeLink) {
+        meta.store_link = storeLink;
+        changed = true;
+      }
+
+      // Treat submit as an activity ping too (prevents staleness).
+      q.last_heartbeat_ms = nowMs;
+      q.stale = false;
+      q.eligible = true;
+      changed = true;
+    }
   }
 
   changed = reconcileAndHandle(state, nowMs) || changed;
