@@ -278,6 +278,18 @@ app.get("/api/admin/state", (req, res) => {
   });
 });
 
+app.post("/api/admin/reset", (req, res) => {
+  if (!isAdmin(req)) return res.status(401).json({ ok: false });
+  const confirm = String(req.query.confirm || req.body?.confirm || "").trim();
+  if (confirm !== "1") return res.status(400).json({ ok: false, note: "confirm_required" });
+
+  const nowMs = Date.now();
+  const state = initialState();
+  state.admin_log.push({ at: nowMs, action: "reset_all", details: "confirm=1" });
+  saveState(STATE_PATH, state);
+  return res.json({ ok: true });
+});
+
 app.delete("/api/admin/apps/:appId", (req, res) => {
   if (!isAdmin(req)) return res.status(401).json({ ok: false });
 

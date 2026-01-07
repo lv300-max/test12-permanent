@@ -91,6 +91,7 @@ node server/bin/seed_room.js http://127.0.0.1:8787 <YOUR_USER_ID>
 Header: `X-Admin-Token: <TEST12_ADMIN_TOKEN>`
 
 - `GET /api/admin/state`
+- `POST /api/admin/reset?confirm=1` — wipes all apps/queue/sessions (admin token required)
 - `DELETE /api/admin/apps/:appId` — removes a waiting app; add `?force=1` to also remove an app from an active session (reassigns remaining tests)
 - `POST /api/prodev/bundle` — create bundle drops (size 3/5/7/10) for a user; automatically queues the first drop
 

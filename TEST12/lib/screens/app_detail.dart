@@ -79,7 +79,7 @@ class AppDetailScreen extends StatelessWidget {
             ),
           ),
           body: SafeArea(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

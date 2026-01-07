@@ -55,7 +55,7 @@ class _TerminalBoardScreenState extends State<TerminalBoardScreen> with SingleTi
       await _chirp.stop();
       await _chirp.setVolume(1.0);
       await _chirp.play(
-        AssetSource('sfx/coqui.wav'),
+        AssetSource('sfx/moneyhopper_opening.mp3'),
         volume: 1.0,
       );
     } catch (_) {
@@ -74,7 +74,7 @@ class _TerminalBoardScreenState extends State<TerminalBoardScreen> with SingleTi
       await _chirp.stop();
       await _chirp.setVolume(1.0);
       await _chirp.play(
-        AssetSource('sfx/coqui.wav'),
+        AssetSource('sfx/moneyhopper_opening.mp3'),
         volume: 1.0,
       );
       if (mounted) {

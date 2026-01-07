@@ -285,6 +285,87 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
     }
   }
 
+  Future<void> _resetAll() async {
+    final base = widget.m.apiBaseUrl.trim();
+    final token = _token.trim();
+
+    if (base.isEmpty) {
+      setState(() => _error = 'Backend URL not set.');
+      return;
+    }
+    if (token.isEmpty) {
+      setState(() => _error = 'Admin token not set.');
+      return;
+    }
+
+    try {
+      final url = Uri.parse('$base/api/admin/reset?confirm=1');
+      final r = await http
+          .post(
+            url,
+            headers: {
+              'Cache-Control': 'no-store',
+              'X-Admin-Token': token,
+            },
+          )
+          .timeout(_httpTimeout);
+
+      final decoded = r.body.isEmpty ? null : jsonDecode(r.body);
+      if (r.statusCode < 200 || r.statusCode >= 300) {
+        if (decoded is Map && decoded['note'] != null) {
+          throw Exception(decoded['note']);
+        }
+        throw Exception('HTTP ${r.statusCode}');
+      }
+      if (decoded is! Map<String, dynamic>) {
+        throw Exception('Bad response');
+      }
+      if (decoded['ok'] != true) {
+        throw Exception(decoded['note'] ?? 'Request failed');
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ALL SUBMISSIONS CLEARED', style: TextStyle(fontFamily: 'RobotoMono')),
+          duration: Duration(milliseconds: 1300),
+          backgroundColor: Try12Colors.board,
+        ),
+      );
+      await _refresh(silent: true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    }
+  }
+
+  Future<void> _confirmResetAll() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Try12Colors.panel,
+        title: const Text('CLEAR ALL SUBMISSIONS?', style: TextStyle(fontFamily: 'RobotoMono', color: Try12Colors.text)),
+        content: const Text(
+          'This wipes every app, queue entry, and active session. Cannot be undone.',
+          style: TextStyle(fontFamily: 'RobotoMono', fontSize: 12, color: Try12Colors.dim, height: 1.35),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('CANCEL', style: TextStyle(fontFamily: 'RobotoMono')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('CLEAR ALL', style: TextStyle(fontFamily: 'RobotoMono', color: Try12Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await _resetAll();
+    }
+  }
+
   static String _maskToken(String token) {
     final t = token.trim();
     if (t.isEmpty) return '(not set)';
@@ -366,6 +447,11 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                 tooltip: 'Admin token',
                 onPressed: _editToken,
                 icon: const Icon(Icons.key),
+              ),
+              IconButton(
+                tooltip: 'Clear all submissions',
+                onPressed: _confirmResetAll,
+                icon: const Icon(Icons.delete_sweep),
               ),
               IconButton(
                 tooltip: _auto ? 'Auto refresh: ON' : 'Auto refresh: OFF',
