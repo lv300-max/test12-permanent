@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/background.dart';
 import '../core/state_machine.dart';
 import '../core/theme.dart';
@@ -22,6 +23,7 @@ class _GateReadFirstState extends State<GateReadFirst> {
   final phoneNumCtrl = TextEditingController();
   final emailCtrl = TextEditingController(); // New email field
   final bundleIdCtrl = TextEditingController();
+  final proDevAccessCtrl = TextEditingController();
   final GoogleSignIn _google = GoogleSignIn();
   bool _authBusy = false;
 
@@ -29,6 +31,7 @@ class _GateReadFirstState extends State<GateReadFirst> {
   void initState() {
     super.initState();
     _restoreGoogle();
+    _restoreAdminToken();
   }
 
   Future<void> _restoreGoogle() async {
@@ -40,6 +43,27 @@ class _GateReadFirstState extends State<GateReadFirst> {
       if (emailCtrl.text.trim().isEmpty) emailCtrl.text = account.email;
     } catch (_) {
       // Ignore — user can still submit with phone number.
+    }
+  }
+
+  Future<void> _restoreAdminToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('adminToken') ?? '';
+      if (!mounted) return;
+      if (token.trim().isNotEmpty) proDevAccessCtrl.text = token.trim();
+    } catch (_) {
+      // ignore
+    }
+  }
+
+  Future<void> _saveAdminToken(String raw) async {
+    final token = raw.trim();
+    final prefs = await SharedPreferences.getInstance();
+    if (token.isEmpty) {
+      await prefs.remove('adminToken');
+    } else {
+      await prefs.setString('adminToken', token);
     }
   }
 
@@ -109,6 +133,7 @@ class _GateReadFirstState extends State<GateReadFirst> {
     phoneNumCtrl.dispose();
     emailCtrl.dispose();
     bundleIdCtrl.dispose();
+    proDevAccessCtrl.dispose();
     super.dispose();
   }
 
@@ -278,6 +303,47 @@ class _GateReadFirstState extends State<GateReadFirst> {
                                       ),
                                     ],
                                   ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              // PRO🗂️DEV ACCESS (subtle admin shortcut)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Try12Colors.board.withValues(alpha: 0.28),
+                                  border: Border.all(color: Try12Colors.border.withValues(alpha: 0.65)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: proDevAccessCtrl,
+                                        obscureText: true,
+                                        obscuringCharacter: '•',
+                                        style: const TextStyle(fontFamily: 'RobotoMono', fontSize: 11, color: Try12Colors.text, letterSpacing: 0.4),
+                                        decoration: const InputDecoration(
+                                          isDense: true,
+                                          border: InputBorder.none,
+                                          hintText: 'PRO🗂️DEV ACCESS',
+                                          hintStyle: TextStyle(fontFamily: 'RobotoMono', fontSize: 11, color: Try12Colors.dim, letterSpacing: 0.6),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    GestureDetector(
+                                      onTap: () async {
+                                        await _saveAdminToken(proDevAccessCtrl.text);
+                                        if (!mounted) return;
+                                        widget.m.openControlRoom();
+                                      },
+                                      child: const Text(
+                                        'ENTER',
+                                        style: TextStyle(fontFamily: 'RobotoMono', fontSize: 11, color: Try12Colors.highlight, letterSpacing: 0.8),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],

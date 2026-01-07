@@ -284,6 +284,9 @@ app.delete("/api/admin/apps/:appId", (req, res) => {
   const appId = String(req.params.appId || "").trim();
   if (!appId) return res.status(400).json({ ok: false });
 
+  const forceRaw = String(req.query.force ?? "").trim().toLowerCase();
+  const force = forceRaw === "1" || forceRaw === "true" || forceRaw === "yes";
+
   const nowMs = Date.now();
   const state = loadState(STATE_PATH);
   let changed = reconcileAndHandle(state, nowMs);
@@ -293,19 +296,36 @@ app.delete("/api/admin/apps/:appId", (req, res) => {
     return res.status(404).json({ ok: false });
   }
 
-  if (isAppInAnyActiveSession(state, appId)) {
-    return res.status(409).json({ ok: false, note: "cannot_remove_active_session_app" });
+  const activeSession = findActiveSessionByAppId(state, appId);
+  if (activeSession && !force) {
+    return res.status(409).json({
+      ok: false,
+      note: "cannot_remove_active_session_app",
+      hint: "re-try with ?force=1"
+    });
   }
 
   const q = findQueueEntry(state, appId);
-  if (q) q.status = "removed";
+  if (q) {
+    q.status = "removed";
+    q.session_id = null;
+    q.assigned_tests = [];
+    q.tests_required = 0;
+    q.tests_done = 0;
+    q.completed_tests = [];
+    q.eligible = false;
+  }
+  if (activeSession) {
+    const removed = removeFromActiveSession(state, activeSession, appId, nowMs);
+    if (removed) changed = true;
+  }
   delete state.apps_by_id[appId];
   changed = true;
 
   state.admin_log.push({
     at: nowMs,
     action: "remove_app",
-    details: `app_id=${appId}`
+    details: `app_id=${appId}${activeSession ? `,forced=${force ? "1" : "0"},session_id=${activeSession.session_id}` : ""}`
   });
 
   // If it was a ProDev drop, free the slot and schedule the next one
@@ -343,6 +363,58 @@ function findQueueEntry(state, appId) {
 function isAppInAnyActiveSession(state, appId) {
   const sessions = Array.isArray(state.sessions) ? state.sessions : [];
   return sessions.some((s) => s && s.status === "active" && Array.isArray(s.app_ids) && s.app_ids.includes(appId));
+}
+
+function findActiveSessionByAppId(state, appId) {
+  const sessions = Array.isArray(state.sessions) ? state.sessions : [];
+  return sessions.find(
+    (s) => s && s.status === "active" && Array.isArray(s.app_ids) && s.app_ids.includes(appId)
+  ) || null;
+}
+
+function removeFromActiveSession(state, session, appId, nowMs) {
+  if (!state || !session || !Array.isArray(session.app_ids)) return false;
+  if (!session.app_ids.includes(appId)) return false;
+
+  session.app_ids = session.app_ids.filter((id) => id !== appId);
+  const sessionId = session.session_id;
+  const ids = session.app_ids.slice();
+  const idSet = new Set(ids);
+
+  let changed = true;
+  for (const q of state.queue) {
+    if (!q || q.status !== "in_session") continue;
+    if (q.session_id !== sessionId) continue;
+    if (q.app_id === appId) continue;
+    if (!idSet.has(q.app_id)) continue;
+
+    const assigned = ids.filter((id) => id !== q.app_id);
+    q.assigned_tests = assigned;
+    q.tests_required = assigned.length;
+
+    const allowed = new Set(assigned);
+    q.completed_tests = Array.isArray(q.completed_tests)
+      ? q.completed_tests.filter((t) => {
+          if (!t || typeof t !== "object") return false;
+          const targetId = t.target_app_id;
+          return typeof targetId === "string" && allowed.has(targetId);
+        })
+      : [];
+    q.tests_done = q.completed_tests.length;
+    q.eligible = q.tests_done >= q.tests_required;
+    q.stale = false;
+    if (typeof q.last_heartbeat_ms !== "number") q.last_heartbeat_ms = nowMs;
+
+    const meta = state.apps_by_id[q.app_id];
+    if (meta) {
+      meta.tests_required = q.tests_required;
+      meta.tests_done = q.tests_done;
+      meta.assigned_tests = q.assigned_tests;
+      meta.eligible = q.eligible;
+    }
+  }
+
+  return changed;
 }
 
 function assignTests(state, appId, nowMs) {

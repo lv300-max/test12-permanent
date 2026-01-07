@@ -192,6 +192,99 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
     }
   }
 
+  Future<void> _deleteApp({required String appId, required bool force}) async {
+    final base = widget.m.apiBaseUrl.trim();
+    final token = _token.trim();
+
+    if (base.isEmpty) {
+      setState(() => _error = 'Backend URL not set.');
+      return;
+    }
+    if (token.isEmpty) {
+      setState(() => _error = 'Admin token not set.');
+      return;
+    }
+
+    try {
+      final url = Uri.parse('$base/api/admin/apps/${Uri.encodeComponent(appId)}${force ? '?force=1' : ''}');
+      final r = await http
+          .delete(
+            url,
+            headers: {
+              'Cache-Control': 'no-store',
+              'X-Admin-Token': token,
+            },
+          )
+          .timeout(_httpTimeout);
+
+      final decoded = r.body.isEmpty ? null : jsonDecode(r.body);
+      if (r.statusCode < 200 || r.statusCode >= 300) {
+        if (decoded is Map && decoded['note'] != null) {
+          throw Exception(decoded['note']);
+        }
+        throw Exception('HTTP ${r.statusCode}');
+      }
+      if (decoded is! Map<String, dynamic>) {
+        throw Exception('Bad response');
+      }
+      if (decoded['ok'] != true) {
+        throw Exception(decoded['note'] ?? 'Request failed');
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('REMOVED $appId', style: const TextStyle(fontFamily: 'RobotoMono')),
+          duration: const Duration(milliseconds: 1100),
+          backgroundColor: Try12Colors.board,
+        ),
+      );
+      await _refresh(silent: true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    }
+  }
+
+  Future<void> _confirmDelete({
+    required String appId,
+    required String status,
+    String? userId,
+    String? appName,
+  }) async {
+    final force = status == 'in_session';
+    final title = force ? 'FORCE REMOVE?' : 'REMOVE?';
+    final detail = [
+      if (appName != null && appName.trim().isNotEmpty) appName.trim(),
+      'APP: $appId',
+      if (userId != null && userId.trim().isNotEmpty) 'USER: ${userId.trim()}',
+      'STATUS: $status',
+      if (force) 'This will also remove the app from its active session.',
+    ].join('\n');
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Try12Colors.panel,
+        title: Text(title, style: const TextStyle(fontFamily: 'RobotoMono', color: Try12Colors.text)),
+        content: Text(detail, style: const TextStyle(fontFamily: 'RobotoMono', fontSize: 12, color: Try12Colors.dim, height: 1.35)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('CANCEL', style: TextStyle(fontFamily: 'RobotoMono')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(force ? 'FORCE REMOVE' : 'REMOVE', style: const TextStyle(fontFamily: 'RobotoMono', color: Try12Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await _deleteApp(appId: appId, force: force);
+    }
+  }
+
   static String _maskToken(String token) {
     final t = token.trim();
     if (t.isEmpty) return '(not set)';
@@ -376,7 +469,23 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                               for (final q in queue.take(40).whereType<Map>())
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 8),
-                                  child: _QueueRow(entry: q),
+                                  child: _QueueRow(
+                                    entry: q,
+                                    meta: (appsById[(q['app_id'] ?? '').toString()] is Map)
+                                        ? (appsById[(q['app_id'] ?? '').toString()] as Map)
+                                        : null,
+                                    onDelete: () {
+                                      final appId = (q['app_id'] ?? '').toString();
+                                      final status = (q['status'] ?? '').toString();
+                                      if (appId.trim().isEmpty || status.trim().isEmpty) return;
+                                      _confirmDelete(
+                                        appId: appId,
+                                        status: status,
+                                        userId: (q['user_id'] ?? '').toString(),
+                                        appName: ((appsById[appId] is Map) ? (appsById[appId] as Map)['app_name'] : null)?.toString(),
+                                      );
+                                    },
+                                  ),
                                 ),
                             ],
                           ),
@@ -491,7 +600,9 @@ class _SessionRow extends StatelessWidget {
 
 class _QueueRow extends StatelessWidget {
   final Map entry;
-  const _QueueRow({required this.entry});
+  final Map? meta;
+  final VoidCallback? onDelete;
+  const _QueueRow({required this.entry, this.meta, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -503,6 +614,7 @@ class _QueueRow extends StatelessWidget {
     final testsDone = entry['tests_done'] is num ? (entry['tests_done'] as num).toInt() : null;
     final testsReq = entry['tests_required'] is num ? (entry['tests_required'] as num).toInt() : null;
     final hb = entry['last_heartbeat_ms'];
+    final appName = (meta?['app_name'] ?? '').toString().trim();
 
     final badgeColor = status == 'in_session'
         ? Try12Colors.highlight
@@ -522,7 +634,7 @@ class _QueueRow extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '$appId • $userId',
+                  appName.isEmpty ? '$appId • $userId' : '$appId • $appName',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontFamily: 'RobotoMono', fontSize: 11, color: Try12Colors.text, fontWeight: FontWeight.w800),
@@ -541,8 +653,25 @@ class _QueueRow extends StatelessWidget {
                   style: TextStyle(fontFamily: 'RobotoMono', fontSize: 9, color: badgeColor, letterSpacing: 0.6),
                 ),
               ),
+              if (onDelete != null) ...[
+                const SizedBox(width: 6),
+                IconButton(
+                  tooltip: status == 'in_session' ? 'Force remove' : 'Remove',
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_forever, color: Try12Colors.red, size: 18),
+                ),
+              ],
             ],
           ),
+          if (appName.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              userId,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontFamily: 'RobotoMono', fontSize: 10, color: Try12Colors.dim, height: 1.25),
+            ),
+          ],
           const SizedBox(height: 6),
           Text(
             'HB: ${_ControlRoomScreenState._fmtMs(hb)} • ELIGIBLE: ${eligible ? 'YES' : 'NO'} • STALE: ${stale ? 'YES' : 'NO'} • TESTS: ${testsDone ?? '—'}/${testsReq ?? '—'}',
